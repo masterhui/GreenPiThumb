@@ -92,12 +92,12 @@ sudo apt-get install -y \
 sudo pip install ansible paramiko PyYAML Jinja2 httplib2 six
 
 # Install the Ansible GreenPiThumb role
-sudo ansible-galaxy install masterhui.ansible-role-greenpithumb
+sudo ansible-galaxy install JeetShetty.ansible-role-greenpithumb
 
 # Create a minimal Ansible playbook to install GreenPiThumb
 echo "- hosts: localhost
   roles:
-    - { role: masterhui.ansible-role-greenpithumb }" > install.yml
+    - { role: JeetShetty.ansible-role-greenpithumb }" > install.yml
 
 # Self-provision for GreenPiThumb
 sudo ansible-playbook install.yml
@@ -116,12 +116,12 @@ PI_USER=pi                 # Change to the user on your Pi
 PI_HOSTNAME=raspberrypi    # Change to your Pi's hostname.
 
 # Install the Ansible GreenPiThumb role
-sudo ansible-galaxy install masterhui.ansible-role-greenpithumb
+sudo ansible-galaxy install JeetShetty.ansible-role-greenpithumb
 
 # Create a minimal Ansible playbook to install GreenPiThumb
 echo "- hosts: all
   roles:
-    - { role: masterhui.ansible-role-greenpithumb}" > install.yml
+    - { role: JeetShetty.ansible-role-greenpithumb}" > install.yml
 
 # Provision the Pi using the playbook.
 ansible-playbook install.yml \
