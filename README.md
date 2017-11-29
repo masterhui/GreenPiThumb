@@ -27,7 +27,7 @@ cd Adafruit_Python_DHT
 python setup.py install
 
 cd ..
-git clone https://github.com/JeetShetty/GreenPiThumb.git
+git clone https://github.com/masterhui/GreenPiThumb.git
 cd GreenPiThumb
 sudo pip install -r requirements.txt
 cp greenpithumb/wiring_config.ini.example greenpithumb/wiring_config.ini
@@ -59,7 +59,7 @@ cd Adafruit_Python_DHT
 sudo python setup.py install --force-test
 
 cd ..
-git clone https://github.com/JeetShetty/GreenPiThumb.git
+git clone https://github.com/masterhui/GreenPiThumb.git
 cd GreenPiThumb
 sudo pip install -r requirements.txt
 sudo pip install -r dev_requirements.txt
@@ -68,7 +68,7 @@ cp greenpithumb/wiring_config.ini.example greenpithumb/wiring_config.ini
 
 ### Ansible Installation
 
-This repository contains the GreenPiThumb backend, but GreenPiThumb also offers a [web frontend](https://github.com/JeetShetty/GreenPiThumb_Frontend_static) so you can check status of GreenPiThumb in your browser.
+This repository contains the GreenPiThumb backend, but GreenPiThumb also offers a [web frontend](https://github.com/masterhui/GreenPiThumb_Frontend_static) so you can check status of GreenPiThumb in your browser.
 
 The instructions below explain how to install all backend and frontend components of GreenPiThumb to a Raspberry Pi device.
 
@@ -92,12 +92,12 @@ sudo apt-get install -y \
 sudo pip install ansible paramiko PyYAML Jinja2 httplib2 six
 
 # Install the Ansible GreenPiThumb role
-sudo ansible-galaxy install JeetShetty.ansible-role-greenpithumb
+sudo ansible-galaxy install masterhui.ansible-role-greenpithumb
 
 # Create a minimal Ansible playbook to install GreenPiThumb
 echo "- hosts: localhost
   roles:
-    - { role: JeetShetty.ansible-role-greenpithumb }" > install.yml
+    - { role: masterhui.ansible-role-greenpithumb }" > install.yml
 
 # Self-provision for GreenPiThumb
 sudo ansible-playbook install.yml
@@ -116,12 +116,12 @@ PI_USER=pi                 # Change to the user on your Pi
 PI_HOSTNAME=raspberrypi    # Change to your Pi's hostname.
 
 # Install the Ansible GreenPiThumb role
-sudo ansible-galaxy install JeetShetty.ansible-role-greenpithumb
+sudo ansible-galaxy install masterhui.ansible-role-greenpithumb
 
 # Create a minimal Ansible playbook to install GreenPiThumb
 echo "- hosts: all
   roles:
-    - { role: JeetShetty.ansible-role-greenpithumb}" > install.yml
+    - { role: masterhui.ansible-role-greenpithumb}" > install.yml
 
 # Provision the Pi using the playbook.
 ansible-playbook install.yml \
@@ -143,12 +143,12 @@ GreenPiThumb is designed for compatibility with a [Raspberry Pi device](https://
 
 An example wiring can be found below:
 
-[![Fritzing wiring diagram](https://raw.githubusercontent.com/JeetShetty/GreenPiThumb/master/doc/greenpithumb_wiring.png)](https://raw.githubusercontent.com/JeetShetty/GreenPiThumb/master/doc/greenpithumb_wiring.png)
+[![Fritzing wiring diagram](https://raw.githubusercontent.com/masterhui/GreenPiThumb/master/doc/greenpithumb_wiring.png)](https://raw.githubusercontent.com/masterhui/GreenPiThumb/master/doc/greenpithumb_wiring.png)
 
 The Fritzing diagram file for this diagram is available in the [`doc` folder](doc/).
 
 ## Related Repositories
 
-* [GreenPiThumb_Frontend](https://github.com/JeetShetty/GreenPiThumb_Frontend): Web API to provide status about GreenPiThumb.
-* [GreenPiThumb_Frontend_static](https://github.com/JeetShetty/GreenPiThumb_Frontend_static): An AngularJS web app for viewing GreenPiThumb status (the static portion of the web frontend).
-* [ansible-role-greenpithumb](https://github.com/JeetShetty/ansible-role-greenpithumb): An [Ansible](https://www.ansible.com/how-ansible-works) role for deploying all parts of GreenPiThumb to a system.
+* [GreenPiThumb_Frontend](https://github.com/masterhui/GreenPiThumb_Frontend): Web API to provide status about GreenPiThumb.
+* [GreenPiThumb_Frontend_static](https://github.com/masterhui/GreenPiThumb_Frontend_static): An AngularJS web app for viewing GreenPiThumb status (the static portion of the web frontend).
+* [ansible-role-greenpithumb](https://github.com/masterhui/ansible-role-greenpithumb): An [Ansible](https://www.ansible.com/how-ansible-works) role for deploying all parts of GreenPiThumb to a system.
