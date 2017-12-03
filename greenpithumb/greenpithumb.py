@@ -115,7 +115,7 @@ def make_camera_manager(rotation, image_path, light_sensor):
         A CameraManager instance with the given settings.
     """
     camera = picamera.PiCamera(resolution=picamera.PiCamera.MAX_RESOLUTION)
-    camera.rotation = rotation
+    camera.rotation = 0 
     return camera_manager.CameraManager(image_path,
                                         clock.Clock(), camera, light_sensor)
 

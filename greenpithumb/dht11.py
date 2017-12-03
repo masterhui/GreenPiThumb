@@ -13,6 +13,10 @@ _HUMIDITY_INDEX = 0
 # Position of  temperature value in the tuple returned from DHT11 read function.
 _TEMPERATURE_INDEX = 1
 
+# Sensor calibration
+TEMPERATURE_CORRECTION = -1.2
+HUMIDITY_CORRECTION = -14.0
+
 
 class CachingDHT11(object):
     """Wrapper around a DHT11 that caches sensor readings.
@@ -59,9 +63,9 @@ class CachingDHT11(object):
     def humidity(self):
         """Returns a recent relative humidity reading."""
         humidity = self._read_dht11()[_HUMIDITY_INDEX]
-        return humidity
+        return humidity + HUMIDITY_CORRECTION
 
     def temperature(self):
         """Returns a recent ambient temperature reading in Celsius."""
         temperature = self._read_dht11()[_TEMPERATURE_INDEX]
-        return temperature
+        return temperature + TEMPERATURE_CORRECTION

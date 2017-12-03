@@ -29,10 +29,20 @@ class SoilMoistureSensor(object):
         Takes a reading from the moisture sensor by powering the GPIO pin the
         sensor is connected to.
         """
+        
+        # Measured sensor max and min value constants
+        Vair = 802.0
+        Vwet = 393.0
+        
         try:
             self._pi_io.turn_pin_on(self._gpio_pin)
-            moisture = self._adc.read_adc(self._channel)
-            logger.info('soil moisture reading = %d', moisture)
-            return moisture
+            moisture_raw = self._adc.read_adc(self._channel)
+            
+            # Correct for DFRobot Soil Moisture Sensor
+            moisture_corrected = ((Vair - moisture_raw) / (Vair - Vwet)) * 100            
+            
+            logger.info('soil moisture reading raw= %d', moisture_raw)
+            logger.info('soil moisture reading corrected = %d', moisture_corrected)
+            return moisture_corrected
         finally:
             self._pi_io.turn_pin_off(self._gpio_pin)
