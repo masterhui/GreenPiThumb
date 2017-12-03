@@ -33,16 +33,13 @@ class SoilMoistureSensor(object):
         # Measured sensor max and min value constants
         Vair = 802.0
         Vwet = 393.0
+
+        # Read raw value        
+        moisture_raw = self._adc.read_adc(self._channel)
+        logger.info('soil moisture reading raw= %d', moisture_raw)
+            
+        # Correct for DFRobot Soil Moisture Sensor
+        moisture_corrected = ((Vair - moisture_raw) / (Vair - Vwet)) * 100
+        logger.info('soil moisture reading corrected = %d', moisture_corrected)
         
-        try:
-            self._pi_io.turn_pin_on(self._gpio_pin)
-            moisture_raw = self._adc.read_adc(self._channel)
-            
-            # Correct for DFRobot Soil Moisture Sensor
-            moisture_corrected = ((Vair - moisture_raw) / (Vair - Vwet)) * 100            
-            
-            logger.info('soil moisture reading raw= %d', moisture_raw)
-            logger.info('soil moisture reading corrected = %d', moisture_corrected)
-            return moisture_corrected
-        finally:
-            self._pi_io.turn_pin_off(self._gpio_pin)
+        return moisture_corrected
