@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Pump rate in mL/s (4.3 L/min)
-_PUMP_RATE_ML_PER_SEC = 4300.0 / 60.0
+_PUMP_RATE_ML_PER_SEC = 1433.0 / 60.0
 
 # Default amount of water to add to the plant (in mL) when pump manager detects
 # low soil moisture.
