@@ -18,6 +18,9 @@ HumidityRecord = collections.namedtuple('HumidityRecord',
 # temperature value is in degrees Celsius.
 TemperatureRecord = collections.namedtuple('TemperatureRecord',
                                            ['timestamp', 'temperature'])
+# water level in cm
+WaterLevelRecord = collections.namedtuple('WaterLevelRecord',
+                                        ['timestamp', 'water_level'])                                           
 # water_pumped is the volume of water pumped in mL.
 WateringEventRecord = collections.namedtuple('WateringEventRecord',
                                              ['timestamp', 'water_pumped'])
@@ -34,6 +37,11 @@ CREATE TABLE humidity
 (
     timestamp TEXT,
     humidity REAL
+);
+CREATE TABLE water_level
+(
+    timestamp TEXT,
+    water_level REAL
 );
 CREATE TABLE soil_moisture
 (
@@ -236,6 +244,27 @@ class TemperatureStore(_DbStoreBase):
             A list of objects with 'timestamp' and 'temperature' fields.
         """
         return self._do_get('SELECT * FROM temperature', TemperatureRecord)
+        
+class WaterLevelStore(_DbStoreBase):
+    """Stores water level readings."""
+
+    def insert(self, water_level_record):
+        """Inserts water level and timestamp info into an SQLite database.
+
+        Args:
+            water_level_record: Water level record to store.
+        """
+        self._do_insert('INSERT INTO water_level VALUES (?, ?)',
+                        water_level_record.timestamp,
+                        water_level_record.water_level)
+
+    def get(self):
+        """Retrieves timestamp and water level [cm] readings.
+
+        Returns:
+            A list of objects with 'timestamp' and 'water_level' fields.
+        """
+        return self._do_get('SELECT * FROM water_level', WaterLevelRecord)        
 
 
 class WateringEventStore(_DbStoreBase):

@@ -37,6 +37,11 @@ class SensorPollerFactory(object):
         return _SensorPoller(
             _HumidityPollWorker(self._make_scheduler_func(), self._record_queue,
                                 humidity_sensor))
+                                
+    def create_water_level_poller(self, water_level_sensor):
+        return _SensorPoller(
+            _WaterLevelPollWorker(self._make_scheduler_func(), self._record_queue,
+                                water_level_sensor))                                
 
     def create_light_poller(self, light_sensor):
         return _SensorPoller(
@@ -201,6 +206,16 @@ class _HumidityPollWorker(_SensorPollWorkerBase):
         humidity = self._sensor.humidity()
         self._record_queue.put(
             db_store.HumidityRecord(self._scheduler.last_poll_time(), humidity))
+            
+            
+class _WaterLevelPollWorker(_SensorPollWorkerBase):
+    """Polls a water level sensor and stores the readings."""
+
+    def _poll_once(self):
+        """Polls for and stores current water level."""
+        water_level = self._sensor.water_level()
+        self._record_queue.put(
+            db_store.WaterLevelRecord(self._scheduler.last_poll_time(), water_level))            
 
 
 class _LightPollWorker(_SensorPollWorkerBase):

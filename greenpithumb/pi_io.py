@@ -15,6 +15,7 @@ class IO(object):
         self._GPIO = gpio
         self._GPIO.setmode(self._GPIO.BCM)
         self._output_pins = set()
+        self._input_pins = set()
 
     def turn_pin_on(self, pin):
         """Turns on a Raspberry Pi GPIO pin.
@@ -33,6 +34,15 @@ class IO(object):
         """
         self._ensure_pin_is_output(pin)
         self._GPIO.output(pin, self._GPIO.LOW)
+        
+    def read_pin(self, pin):
+        """Reads a Raspberry Pi GPIO pin.
+
+        Args:
+            pin: Index of Raspberry Pi pin to read
+        """
+        self._ensure_pin_is_input(pin)
+        return self._GPIO.input(pin)        
 
     def _ensure_pin_is_output(self, pin):
         """Adds pin to output pin set if it is not already in it."""
@@ -40,6 +50,13 @@ class IO(object):
             return
         self._GPIO.setup(pin, self._GPIO.OUT)
         self._output_pins.add(pin)
+        
+    def _ensure_pin_is_input(self, pin):
+        """Adds pin to input pin set if it is not already in it."""
+        if pin in self._input_pins:
+            return
+        self._GPIO.setup(pin, self._GPIO.IN)
+        self._input_pins.add(pin)        
 
     def close(self):
         """Cleans up the Raspberry Pi I/O interface.

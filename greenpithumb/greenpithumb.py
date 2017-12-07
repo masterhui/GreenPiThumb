@@ -24,6 +24,7 @@ import pump_history
 import record_processor
 import sleep_windows
 import soil_moisture_sensor
+import water_level_sensor
 import temperature_sensor
 import wiring_config_parser
 
@@ -91,12 +92,14 @@ def make_dht11_sensors(wiring_config):
     return temperature_sensor.TemperatureSensor(
         local_dht11), humidity_sensor.HumiditySensor(local_dht11),
 
+def make_water_level_sensor(raspberry_pi_io, wiring_config):
+    return water_level_sensor.WaterLevelSensor(
+        raspberry_pi_io, wiring_config.gpio_pins.sonar)
 
 def make_soil_moisture_sensor(adc, raspberry_pi_io, wiring_config):
     return soil_moisture_sensor.SoilMoistureSensor(
         adc, raspberry_pi_io, wiring_config.adc_channels.soil_moisture_sensor,
         wiring_config.gpio_pins.soil_moisture)
-
 
 def make_light_sensor(adc, wiring_config):
     return light_sensor.LightSensor(adc,
@@ -158,7 +161,7 @@ def make_pump_manager(moisture_threshold, sleep_windows, raspberry_pi_io,
 
 
 def make_sensor_pollers(poll_interval, photo_interval, record_queue,
-                        temperature_sensor, humidity_sensor,
+                        temperature_sensor, humidity_sensor, water_level_sensor,
                         soil_moisture_sensor, light_sensor, camera_manager,
                         pump_manager):
     """Creates a poller for each GreenPiThumb sensor.
@@ -169,6 +172,7 @@ def make_sensor_pollers(poll_interval, photo_interval, record_queue,
         record_queue: Queue on which to put sensor reading records.
         temperature_sensor: Sensor for measuring temperature.
         humidity_sensor: Sensor for measuring humidity.
+        water_level_sensor: Sensor for measuring the reservoir water level.
         soil_moisture_sensor: Sensor for measuring soil moisture.
         light_sensor: Sensor for measuring light levels.
         camera_manager: Interface for capturing photos.
@@ -191,6 +195,7 @@ def make_sensor_pollers(poll_interval, photo_interval, record_queue,
     return [
         poller_factory.create_temperature_poller(temperature_sensor),
         poller_factory.create_humidity_poller(humidity_sensor),
+        poller_factory.create_water_level_poller(water_level_sensor),
         poller_factory.create_soil_watering_poller(
             soil_moisture_sensor,
             pump_manager),
@@ -212,6 +217,7 @@ def create_record_processor(db_connection, record_queue):
         db_store.LightStore(db_connection),
         db_store.HumidityStore(db_connection),
         db_store.TemperatureStore(db_connection),
+        db_store.WaterLevelStore(db_connection),
         db_store.WateringEventStore(db_connection))
 
 
@@ -226,6 +232,8 @@ def main(args):
         adc, raspberry_pi_io, wiring_config)
     local_temperature_sensor, local_humidity_sensor = make_dht11_sensors(
         wiring_config)
+    local_water_level_sensor = make_water_level_sensor(
+        raspberry_pi_io, wiring_config)        
     local_light_sensor = make_light_sensor(adc, wiring_config)
     camera_manager = make_camera_manager(args.camera_rotation, args.image_path,
                                          local_light_sensor)
@@ -247,6 +255,7 @@ def main(args):
             record_queue,
             local_temperature_sensor,
             local_humidity_sensor,
+            local_water_level_sensor,
             local_soil_moisture_sensor,
             local_light_sensor,
             camera_manager,

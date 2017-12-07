@@ -30,7 +30,7 @@ class DuplicateAdcChannelError(Error):
 
 # Represents GreenPiThumb's Rapsberry Pi GPIO pin configuration.
 _GpioPinConfig = collections.namedtuple('_GpioPinConfig', [
-    'pump', 'dht11', 'soil_moisture', 'mcp3008_clk', 'mcp3008_dout',
+    'pump', 'dht11', 'sonar', 'soil_moisture', 'mcp3008_clk', 'mcp3008_dout',
     'mcp3008_din', 'mcp3008_cs_shdn'
 ])
 
@@ -47,7 +47,7 @@ def _validate_gpio_pin_config(gpio_config):
     """
     used_pins = set()
     for pin in [
-            gpio_config.pump, gpio_config.dht11, gpio_config.mcp3008_clk,
+            gpio_config.pump, gpio_config.dht11, gpio_config.sonar, gpio_config.mcp3008_clk,
             gpio_config.mcp3008_dout, gpio_config.mcp3008_din,
             gpio_config.mcp3008_cs_shdn
     ]:
@@ -173,6 +173,7 @@ def parse(config_data):
         A wiring configuration object with the following properties:
             * gpio_pins.pump
             * gpio_pins.dht11
+            * gpio_pins.sonar
             * gpio_pins.soil_moisture
             * gpio_pins.mcp3008_clk
             * gpio_pins.mcp3008_dout
@@ -187,6 +188,7 @@ def parse(config_data):
         gpio_pin_config = _GpioPinConfig(
             pump=_parse_gpio_pin(raw_parser.get('gpio_pins', 'pump')),
             dht11=_parse_gpio_pin(raw_parser.get('gpio_pins', 'dht11')),
+            sonar=_parse_gpio_pin(raw_parser.get('gpio_pins', 'sonar')),
             soil_moisture=_parse_gpio_pin(
                 raw_parser.get('gpio_pins', 'soil_moisture')),
             mcp3008_clk=_parse_gpio_pin(

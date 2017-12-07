@@ -15,12 +15,13 @@ class RecordProcessor(object):
     """Stores records from a queue into database stores."""
 
     def __init__(self, record_queue, soil_moisture_store, light_store,
-                 humidity_store, temperature_store, watering_event_store):
+                 humidity_store, temperature_store, water_level_store, watering_event_store):
         self._record_queue = record_queue
         self._soil_moisture_store = soil_moisture_store
         self._light_store = light_store
         self._humidity_store = humidity_store
         self._temperature_store = temperature_store
+        self._water_level_store = water_level_store
         self._watering_event_store = watering_event_store
 
     def try_process_next_record(self):
@@ -53,6 +54,8 @@ class RecordProcessor(object):
             self._humidity_store.insert(record)
         elif isinstance(record, db_store.TemperatureRecord):
             self._temperature_store.insert(record)
+        elif isinstance(record, db_store.WaterLevelRecord):
+            self._water_level_store.insert(record)            
         elif isinstance(record, db_store.WateringEventRecord):
             self._watering_event_store.insert(record)
         else:
