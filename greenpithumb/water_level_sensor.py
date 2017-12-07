@@ -24,6 +24,9 @@ class WaterLevelSensor(object):
 
         Takes a reading from the water level sensor
         """
+        logger.info('WaterLevelSensor()')
+        timeout_occurred = False
+        distance = 0
         
         # Set to low
         #GPIO.setup(11, GPIO.OUT)
@@ -48,19 +51,30 @@ class WaterLevelSensor(object):
         #GPIO.setup(11, GPIO.IN)
 
         # Count microseconds that SIG was high
+        timeout = time.time() + 1   # 1 second from now
         while self._pi_io.read_pin(self._gpio_pin) == 0:
-          starttime = time.time()
+            starttime = time.time()
+            if (time.time() > timeout):
+                timeout_occurred = True
+                break
 
+        timeout = time.time() + 1   # 1 second from now
         while self._pi_io.read_pin(self._gpio_pin) == 1:
-          endtime = time.time()
+            endtime = time.time()
+            if (time.time() > timeout):
+                timeout_occurred = True
+                break            
 
-        duration = endtime - starttime
-        # The speed of sound is 340 m/s or 29 microseconds per centimeter.
-        # The ping travels out and back, so to find the distance of the
-        # object we take half of the distance travelled.
-        # distance = duration / 29 / 2
-        distance = duration * 34000 / 2
-        #print distance, "cm"
-        logger.info('water level reading corrected = %d', distance)
+        if timeout_occurred:
+            logger.error('Timeout while reading water level')
+        else:
+            duration = endtime - starttime
+            # The speed of sound is 340 m/s or 29 microseconds per centimeter.
+            # The ping travels out and back, so to find the distance of the
+            # object we take half of the distance travelled.
+            # distance = duration / 29 / 2
+            distance = duration * 34000 / 2
+            #print distance, "cm"
+            logger.info('water level reading corrected = %d', distance)
 
         return distance

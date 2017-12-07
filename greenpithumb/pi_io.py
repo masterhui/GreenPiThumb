@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class IO(object):
     """Wrapper for input and output on a Raspberry Pi board.
 
@@ -23,6 +28,7 @@ class IO(object):
         Args:
             pin: Index of Raspberry Pi pin to turn on
         """
+        #~ logger.info('turn_pin_on(%d)', pin)
         self._ensure_pin_is_output(pin)
         self._GPIO.output(pin, self._GPIO.HIGH)
 
@@ -30,8 +36,9 @@ class IO(object):
         """Turns off a Raspberry Pi GPIO pin.
 
         Args:
-            pin: Index of Raspberry Pi pin to turn on
+            pin: Index of Raspberry Pi pin to turn off
         """
+        #~ logger.info('turn_pin_off(%d)', pin)
         self._ensure_pin_is_output(pin)
         self._GPIO.output(pin, self._GPIO.LOW)
         
@@ -46,15 +53,17 @@ class IO(object):
 
     def _ensure_pin_is_output(self, pin):
         """Adds pin to output pin set if it is not already in it."""
-        if pin in self._output_pins:
-            return
+        #~ logger.info('_ensure_pin_is_output(%d)', pin)
+        #~ if pin in self._output_pins:
+            #~ logger.info('******** EARLY EXIT ************')
+            #~ return
         self._GPIO.setup(pin, self._GPIO.OUT)
         self._output_pins.add(pin)
         
     def _ensure_pin_is_input(self, pin):
         """Adds pin to input pin set if it is not already in it."""
-        if pin in self._input_pins:
-            return
+        #~ if pin in self._input_pins:
+            #~ return
         self._GPIO.setup(pin, self._GPIO.IN)
         self._input_pins.add(pin)        
 

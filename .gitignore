@@ -69,7 +69,7 @@ target/
 .ropeproject/*
 
 # GreenPiThumb wiring configuration file
-wiring_config.ini
+#wiring_config.ini
 
 # GreenPiThumb SQLite database
 greenpithumb.db
