@@ -130,7 +130,7 @@ class Scheduler(object):
         next_poll_time_unix = self._next_poll_time_unix()
         seconds_until_poll_time = next_poll_time_unix - self._unix_now()
         wait_seconds = min(seconds_until_poll_time, timeout)
-        if wait_seconds:
+        if (wait_seconds >= 0.0):
             self._clock.wait(wait_seconds)
         # If we didn't time out waiting, return True and update the last poll
         # time.
