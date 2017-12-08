@@ -39,7 +39,7 @@ class SoilMoistureSensor(object):
         #logger.info('soil moisture reading raw= %d', moisture_raw)
             
         # Invert, calibrate sensor range and make the value a percentage
-        moisture_corrected = ((Vair - moisture_raw) / (Vair - Vwet)) * 100
+        moisture_corrected = ((Vair - moisture_raw) / (Vair - Vwet)) * 100.0
         logger.info('soil moisture reading = %d', moisture_corrected)
         
         return moisture_corrected

@@ -72,7 +72,7 @@ class WaterLevelSensor(object):
             distance = duration * 34000.0 / 2.0
             
             # Invert, calibrate sensor range and make the value a percentage
-            fill_percentage = ((RESERVOIR_EMPTY - distance) / (RESERVOIR_EMPTY - RESERVOIR_FULL)) * 100
+            fill_percentage = ((RESERVOIR_EMPTY - distance) / (RESERVOIR_EMPTY - RESERVOIR_FULL)) * 100.0
             logger.info('water level reading = %d', fill_percentage)
 
         return fill_percentage
