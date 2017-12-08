@@ -1,0 +1,19 @@
+[Unit]
+Description=GreenPiThumb Backend Service
+
+[Service]
+ExecStart=/usr/bin/python \
+  /opt/greenpithumb/greenpithumb/greenpithumb.py  \
+  --image_path=/opt/greenpithumb-data/images \
+  --db_file=/opt/greenpithumb-data/greenpithumb.db \
+  --poll_interval=5 \
+  --photo_interval=60 \
+  --moisture_threshold=70 \
+  --pump_amount=1000 \
+  --camera_rotation=0 \
+  --verbose
+WorkingDirectory=/opt/greenpithumb
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=GreenPiThumb Frontend Service
+
+[Service]
+ExecStart=/usr/bin/python \
+  /opt/greenpithumb-frontend/server/server.py \
+  --port 8888 \
+  --db_file /opt/greenpithumb-data/greenpithumb.db \
+  --image_path /opt/greenpithumb-data/images
+WorkingDirectory=/opt/greenpithumb-frontend
+User=greenpithumb-frontend
+
+[Install]
+WantedBy=multi-user.target
