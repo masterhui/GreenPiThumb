@@ -74,9 +74,12 @@ class WaterLevelSensor(object):
             # distance = duration / 29 / 2
             distance = duration * 34000.0 / 2.0
             
-            # Invert, calibrate sensor range and make the value a percentage
-            fill_percentage = ((RESERVOIR_EMPTY - distance) / (RESERVOIR_EMPTY - RESERVOIR_FULL)) * 100.0
-            logger.info('water level reading = %d', fill_percentage)
-
-            self._last_reading = fill_percentage
-            return fill_percentage
+            if ( (distance > RESERVOIR_EMPTY*1.1) or (distance < RESERVOIR_FULL*0.9) ):
+                logger.error('invalid water level reading (%d), discarding measurement', distance)
+                return 0
+            else:
+                # Invert, calibrate sensor range and make the value a percentage
+                fill_percentage = ((RESERVOIR_EMPTY - distance) / (RESERVOIR_EMPTY - RESERVOIR_FULL)) * 100.0
+                logger.info('water level reading = %d', fill_percentage)
+                self._last_reading = fill_percentage
+                return fill_percentage
