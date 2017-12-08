@@ -21,15 +21,17 @@ class WaterLevelSensor(object):
         """
         self._pi_io = pi_io
         self._gpio_pin = gpio_pin
+        self._last_reading = None
 
     def water_level(self):
         """Returns the water level.
 
         Takes a reading from the water level sensor
         """
-        logger.info('WaterLevelSensor()')
         timeout_occurred = False
         distance = 0
+        starttime = 0
+        endtime = 0
         
         # Set to low
         self._pi_io.turn_pin_off(self._gpio_pin)
@@ -47,7 +49,7 @@ class WaterLevelSensor(object):
         self._pi_io.turn_pin_off(self._gpio_pin)
 
         # Count microseconds that SIG was high
-        timeout = time.time() + 1   # 1 second from now
+        timeout = time.time() + 1   # 1 second from now        
         while self._pi_io.read_pin(self._gpio_pin) == 0:
             starttime = time.time()
             if (time.time() > timeout):
@@ -63,6 +65,7 @@ class WaterLevelSensor(object):
 
         if timeout_occurred:
             logger.error('Timeout while reading water level')
+            return 0
         else:
             duration = endtime - starttime
             # The speed of sound is 340 m/s or 29 microseconds per centimeter.
@@ -75,4 +78,5 @@ class WaterLevelSensor(object):
             fill_percentage = ((RESERVOIR_EMPTY - distance) / (RESERVOIR_EMPTY - RESERVOIR_FULL)) * 100.0
             logger.info('water level reading = %d', fill_percentage)
 
-        return fill_percentage
+            self._last_reading = fill_percentage
+            return fill_percentage

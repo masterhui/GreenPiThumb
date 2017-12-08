@@ -124,7 +124,7 @@ def make_camera_manager(rotation, image_path, light_sensor):
 
 
 def make_pump_manager(moisture_threshold, sleep_windows, raspberry_pi_io,
-                      wiring_config, pump_amount, db_connection, pump_interval):
+                      wiring_config, pump_amount, db_connection, pump_interval, water_level_sensor):
     """Creates a pump manager instance.
 
     Args:
@@ -136,12 +136,13 @@ def make_pump_manager(moisture_threshold, sleep_windows, raspberry_pi_io,
         pump_amount: Amount (in mL) to pump on each run of the pump.
         db_connection: Database connection to use to retrieve pump history.
         pump_interval: Maximum amount of time between pump runs.
+        water_level_sensor: Interface to the water level sensor
 
     Returns:
         A PumpManager instance with the given settings.
     """
     water_pump = pump.Pump(raspberry_pi_io,
-                           clock.Clock(), wiring_config.gpio_pins.pump)
+                           clock.Clock(), wiring_config.gpio_pins.pump, water_level_sensor)
     pump_scheduler = pump.PumpScheduler(clock.LocalClock(), sleep_windows)
     pump_timer = clock.Timer(clock.Clock(), pump_interval)
     last_pump_time = pump_history.last_pump_time(
@@ -248,7 +249,8 @@ def main(args):
             wiring_config,
             args.pump_amount,
             db_connection,
-            datetime.timedelta(hours=args.pump_interval))
+            datetime.timedelta(hours=args.pump_interval),
+            local_water_level_sensor)
         pollers = make_sensor_pollers(
             datetime.timedelta(minutes=args.poll_interval),
             datetime.timedelta(minutes=args.photo_interval),

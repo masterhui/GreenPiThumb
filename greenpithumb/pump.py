@@ -1,4 +1,5 @@
 import logging
+import email_notification
 
 logger = logging.getLogger(__name__)
 
@@ -9,11 +10,14 @@ _PUMP_RATE_ML_PER_SEC = 1433.0 / 60.0
 # low soil moisture.
 DEFAULT_PUMP_AMOUNT = 200
 
+# Send email notification if water level drops below this value (in cm)
+WATER_LEVEL_THRESHOLD = 20
+
 
 class Pump(object):
     """Wrapper for a Seaflo 12V water pump."""
 
-    def __init__(self, pi_io, clock, pump_pin):
+    def __init__(self, pi_io, clock, pump_pin, water_level_sensor):
         """Creates a new Pump wrapper.
 
         Args:
@@ -24,6 +28,7 @@ class Pump(object):
         self._pi_io = pi_io
         self._clock = clock
         self._pump_pin = pump_pin
+        self._water_level_sensor = water_level_sensor
 
     def pump_water(self, amount_ml):
         """Pumps the specified amount of water.
@@ -48,7 +53,18 @@ class Pump(object):
             logger.info('turning pump off (with GPIO pin %d)', self._pump_pin)
             self._pi_io.turn_pin_off(self._pump_pin)
             logger.info('pumped %.f mL of water', amount_ml)
-
+            
+            #~ if self._water_level_sensor._last_reading < WATER_LEVEL_THRESHOLD:
+                #~ logger.info("True")
+            
+            # Read water level and check if a notification email should be sent
+            if self._water_level_sensor._last_reading < WATER_LEVEL_THRESHOLD:
+                subject = "GreenPiThumb low water level"
+                body = "The water reservoir fill level has dropped below the set alert threshold of " + str(WATER_LEVEL_THRESHOLD) + " cm.\n\n" + \
+                       "The current fill level is " + str(int(self._water_level_sensor._last_reading)) + " cm."
+                logger.info("Low water level detected: %d cm (threshold=%d cm), sending notification email" % (self._water_level_sensor._last_reading, WATER_LEVEL_THRESHOLD))
+                notifier = email_notification.EmailNotification(subject, body)
+                notifier.send()
         return
 
 
