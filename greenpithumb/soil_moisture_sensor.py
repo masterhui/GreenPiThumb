@@ -36,10 +36,10 @@ class SoilMoistureSensor(object):
 
         # Read raw value        
         moisture_raw = self._adc.read_adc(self._channel)
-        logger.info('soil moisture reading raw= %d', moisture_raw)
+        #logger.info('soil moisture reading raw= %d', moisture_raw)
             
-        # Correct for DFRobot Soil Moisture Sensor
+        # Invert, calibrate sensor range and make the value a percentage
         moisture_corrected = ((Vair - moisture_raw) / (Vair - Vwet)) * 100
-        logger.info('soil moisture reading corrected = %d', moisture_corrected)
+        logger.info('soil moisture reading = %d', moisture_corrected)
         
         return moisture_corrected

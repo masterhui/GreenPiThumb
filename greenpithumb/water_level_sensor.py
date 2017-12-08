@@ -4,6 +4,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+RESERVOIR_FULL = 3.0     # [cm]
+RESERVOIR_EMPTY = 40.0   # [cm]
+
 
 class WaterLevelSensor(object):
     """Wrapper for a sonar sensor."""
@@ -29,26 +32,19 @@ class WaterLevelSensor(object):
         distance = 0
         
         # Set to low
-        #GPIO.setup(11, GPIO.OUT)
-        #GPIO.output(11, False)
         self._pi_io.turn_pin_off(self._gpio_pin)
 
         # Sleep 2 micro-seconds
         time.sleep(0.000002)
 
         # Set high
-        #GPIO.output(11, True)
         self._pi_io.turn_pin_on(self._gpio_pin)
 
         # Sleep 5 micro-seconds
         time.sleep(0.000005)
 
         # Set low
-        #GPIO.output(11, False)
         self._pi_io.turn_pin_off(self._gpio_pin)
-
-        # Set to input
-        #GPIO.setup(11, GPIO.IN)
 
         # Count microseconds that SIG was high
         timeout = time.time() + 1   # 1 second from now
@@ -73,8 +69,10 @@ class WaterLevelSensor(object):
             # The ping travels out and back, so to find the distance of the
             # object we take half of the distance travelled.
             # distance = duration / 29 / 2
-            distance = duration * 34000 / 2
-            #print distance, "cm"
-            logger.info('water level reading corrected = %d', distance)
+            distance = duration * 34000.0 / 2.0
+            
+            # Invert, calibrate sensor range and make the value a percentage
+            fill_percentage = ((RESERVOIR_EMPTY - distance) / (RESERVOIR_EMPTY - RESERVOIR_FULL)) * 100
+            logger.info('water level reading = %d', fill_percentage)
 
-        return distance
+        return fill_percentage
