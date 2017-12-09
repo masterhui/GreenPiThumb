@@ -214,8 +214,9 @@ class _WaterLevelPollWorker(_SensorPollWorkerBase):
     def _poll_once(self):
         """Polls for and stores current water level."""
         water_level = self._sensor.water_level()
-        self._record_queue.put(
-            db_store.WaterLevelRecord(self._scheduler.last_poll_time(), water_level))            
+        if(water_level >= 0.0):
+            self._record_queue.put(
+                db_store.WaterLevelRecord(self._scheduler.last_poll_time(), water_level))            
 
 
 class _LightPollWorker(_SensorPollWorkerBase):

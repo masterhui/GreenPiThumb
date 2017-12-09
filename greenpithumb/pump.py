@@ -10,7 +10,7 @@ _PUMP_RATE_ML_PER_SEC = 1433.0 / 60.0
 # low soil moisture.
 DEFAULT_PUMP_AMOUNT = 200
 
-# Send email notification if water level drops below this value (in cm)
+# Send email notification if water level drops below this value (in %)
 WATER_LEVEL_THRESHOLD = 20
 
 
@@ -58,11 +58,11 @@ class Pump(object):
                 #~ logger.info("True")
             
             # Read water level and check if a notification email should be sent
-            if self._water_level_sensor._last_reading < WATER_LEVEL_THRESHOLD:
-                subject = "GreenPiThumb low water level"
-                body = "The water reservoir fill level has dropped below the set alert threshold of " + str(WATER_LEVEL_THRESHOLD) + " cm.\n\n" + \
-                       "The current fill level is " + str(int(self._water_level_sensor._last_reading)) + " cm."
-                logger.info("Low water level detected: %d cm (threshold=%d cm), sending notification email" % (self._water_level_sensor._last_reading, WATER_LEVEL_THRESHOLD))
+            if (self._water_level_sensor._last_reading < WATER_LEVEL_THRESHOLD):
+                subject = "GreenPiThumb low water tank level"
+                body = "The water tank fill level has dropped below the set alert threshold of " + str(WATER_LEVEL_THRESHOLD) + " %.\n\n" + \
+                       "The current fill level is " + str(int(self._water_level_sensor._last_reading)) + " %."
+                logger.info("Low water tank level detected: %d % (threshold=%d %), sending notification email" % (self._water_level_sensor._last_reading, WATER_LEVEL_THRESHOLD))
                 notifier = email_notification.EmailNotification(subject, body)
                 notifier.send()
         return

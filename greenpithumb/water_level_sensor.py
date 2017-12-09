@@ -65,7 +65,7 @@ class WaterLevelSensor(object):
 
         if timeout_occurred:
             logger.error('Timeout while reading water level')
-            return 0
+            return -1
         else:
             duration = endtime - starttime
             # The speed of sound is 340 m/s or 29 microseconds per centimeter.
@@ -74,9 +74,9 @@ class WaterLevelSensor(object):
             # distance = duration / 29 / 2
             distance = duration * 34000.0 / 2.0
             
-            if ( (distance > RESERVOIR_EMPTY*1.1) or (distance < RESERVOIR_FULL*0.9) ):
-                logger.error('invalid water level reading (%d), discarding measurement', distance)
-                return 0
+            if ( (distance > RESERVOIR_EMPTY * 1.1) or (distance < 0.0) ):
+                logger.error('invalid water level reading (distance=%d), discarding measurement', distance)
+                return -1
             else:
                 # Invert, calibrate sensor range and make the value a percentage
                 fill_percentage = ((RESERVOIR_EMPTY - distance) / (RESERVOIR_EMPTY - RESERVOIR_FULL)) * 100.0
