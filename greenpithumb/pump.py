@@ -62,7 +62,7 @@ class Pump(object):
                 subject = "GreenPiThumb low water tank level"
                 body = "The water tank fill level has dropped below the set alert threshold of " + str(WATER_LEVEL_THRESHOLD) + " %.\n\n" + \
                        "The current fill level is " + str(int(self._water_level_sensor._last_reading)) + " %."
-                logger.info("Low water tank level detected: %d % (threshold=%d %), sending notification email" % (self._water_level_sensor._last_reading, WATER_LEVEL_THRESHOLD))
+                logger.info("Low water tank level detected: {} % (threshold={} %), sending notification email".format(self._water_level_sensor._last_reading, WATER_LEVEL_THRESHOLD))
                 notifier = email_notification.EmailNotification(subject, body)
                 notifier.send()
         return
