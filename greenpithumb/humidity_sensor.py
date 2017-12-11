@@ -18,5 +18,5 @@ class HumiditySensor(object):
     def humidity(self):
         """Returns relative humidity level."""
         humidity = self._dht11.humidity()
-        logger.info('humidity reading = %.1f', humidity)
+        logger.info('humidity reading = {0:0.1f} %'.format(humidity))
         return humidity

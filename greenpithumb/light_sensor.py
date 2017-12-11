@@ -35,8 +35,7 @@ class LightSensor(object):
             LightSensorLowError: Ambient light level is lower than the minimum
                 expected value.
         """
-        light = self._adc.read_adc(self._channel)
-        logger.info('light reading = %d', light)
+        light = self._adc.read_adc(self._channel)        
 
         if light < _LIGHT_SENSOR_MIN_VALUE:
             raise LightSensorLowError(
@@ -45,5 +44,6 @@ class LightSensor(object):
 
         light_as_pct = 100 * (float(light - _LIGHT_SENSOR_MIN_VALUE) / (
             _LIGHT_SENSOR_MAX_VALUE - _LIGHT_SENSOR_MIN_VALUE))
+        logger.info('light reading = {0:0.1f} %'.format(light_as_pct))
 
         return light_as_pct

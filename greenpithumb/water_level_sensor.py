@@ -4,8 +4,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-RESERVOIR_FULL = 3.0     # [cm]
-RESERVOIR_EMPTY = 40.0   # [cm]
+RESERVOIR_FULL =              3.0  # [cm]
+RESERVOIR_EMPTY =            38.0  # [cm]
+DISTANCE_CORRECTION_FACTOR =  3.0  # [cm]
 
 
 class WaterLevelSensor(object):
@@ -29,7 +30,7 @@ class WaterLevelSensor(object):
         Takes a reading from the water level sensor
         """
         timeout_occurred = False
-        distance = 0
+        distance = 0.0
         starttime = 0
         endtime = 0
         
@@ -72,7 +73,7 @@ class WaterLevelSensor(object):
             # The ping travels out and back, so to find the distance of the
             # object we take half of the distance travelled.
             # distance = duration / 29 / 2
-            distance = duration * 34000.0 / 2.0
+            distance = (duration * 34000 / 2.0) - DISTANCE_CORRECTION_FACTOR
             
             if ( (distance > RESERVOIR_EMPTY * 1.1) or (distance < 0.0) ):
                 logger.error('invalid water level reading (distance=%d), discarding measurement', distance)
@@ -80,6 +81,6 @@ class WaterLevelSensor(object):
             else:
                 # Invert, calibrate sensor range and make the value a percentage
                 fill_percentage = ((RESERVOIR_EMPTY - distance) / (RESERVOIR_EMPTY - RESERVOIR_FULL)) * 100.0
-                logger.info('water level reading = %d', fill_percentage)
+                logger.info('water level reading = {0:0.1f} %'.format(fill_percentage))
                 self._last_reading = fill_percentage
                 return fill_percentage

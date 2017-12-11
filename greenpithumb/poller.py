@@ -1,9 +1,8 @@
 import datetime
 import logging
 import threading
-
+import time
 import pytz
-
 import db_store
 
 logger = logging.getLogger(__name__)
@@ -213,6 +212,7 @@ class _WaterLevelPollWorker(_SensorPollWorkerBase):
 
     def _poll_once(self):
         """Polls for and stores current water level."""
+        time.sleep(10)   # Wait 10s so that the time sensitive sonar measuring does not take place with the other sensors
         water_level = self._sensor.water_level()
         if(water_level >= 0.0):
             self._record_queue.put(
