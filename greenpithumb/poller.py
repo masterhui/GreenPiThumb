@@ -14,6 +14,13 @@ _SECONDS_PER_MINUTE = 60
 _IDLE_SECONDS = 0.5
 
 
+# Wait some time so that the time sensitive sensor reading do 
+# not take place with the other sensor readings.
+TEMPERATURE_POLL_DELAY =  5.0
+HUMIDITY_POLL_DELAY    = 10.0
+WATER_LEVEL_POLL_DELAY = 15.0
+
+
 class SensorPollerFactory(object):
     """Factory for creating sensor poller objects."""
 
@@ -191,6 +198,7 @@ class _TemperaturePollWorker(_SensorPollWorkerBase):
 
     def _poll_once(self):
         """Polls for current temperature and queues DB record."""
+        time.sleep(TEMPERATURE_POLL_DELAY)   # Apply poll delay
         temperature = self._sensor.temperature()
         self._record_queue.put(
             db_store.TemperatureRecord(self._scheduler.last_poll_time(),
@@ -202,6 +210,7 @@ class _HumidityPollWorker(_SensorPollWorkerBase):
 
     def _poll_once(self):
         """Polls for and stores current relative humidity."""
+        time.sleep(HUMIDITY_POLL_DELAY)   # Apply poll delay
         humidity = self._sensor.humidity()
         self._record_queue.put(
             db_store.HumidityRecord(self._scheduler.last_poll_time(), humidity))
@@ -212,7 +221,7 @@ class _WaterLevelPollWorker(_SensorPollWorkerBase):
 
     def _poll_once(self):
         """Polls for and stores current water level."""
-        time.sleep(10)   # Wait 10s so that the time sensitive sonar measuring does not take place with the other sensors
+        time.sleep(WATER_LEVEL_POLL_DELAY)   # Apply poll delay
         water_level = self._sensor.water_level()
         if(water_level >= 0.0):
             self._record_queue.put(
