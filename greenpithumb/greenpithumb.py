@@ -7,7 +7,7 @@ import time
 
 import Adafruit_DHT
 import Adafruit_MCP3008
-import picamera
+#~ import picamera
 import RPi.GPIO as GPIO
 
 import adc_thread_safe
@@ -117,10 +117,9 @@ def make_camera_manager(rotation, image_path, light_sensor):
     Returns:
         A CameraManager instance with the given settings.
     """
-    camera = picamera.PiCamera(resolution=picamera.PiCamera.MAX_RESOLUTION)
-    camera.rotation = 0 
-    return camera_manager.CameraManager(image_path,
-                                        clock.Clock(), camera, light_sensor)
+    #~ camera = picamera.PiCamera(resolution=picamera.PiCamera.MAX_RESOLUTION)
+    #~ camera.rotation = 0 
+    return camera_manager.CameraManager(image_path, clock.Clock(), light_sensor)
 
 
 def make_pump_manager(moisture_threshold, sleep_windows, raspberry_pi_io,

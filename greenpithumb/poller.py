@@ -284,7 +284,8 @@ class _CameraPollWorker(_SensorPollWorkerBase):
     def _poll_once(self):
         """Captures and stores an image."""
         if self._sensor.sufficient_light():
-            self._sensor.save_photo()
+            self._sensor.save_photo_full_res()
+            self._sensor.save_photo_reduced_res()
 
     def stop(self):
         """End worker polling and close camera."""
