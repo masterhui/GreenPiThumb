@@ -14,7 +14,7 @@ import adc_thread_safe
 import camera_manager
 import clock
 import db_store
-import dht11
+import dht22
 import humidity_sensor
 import light_sensor
 import pi_io
@@ -76,8 +76,8 @@ def make_adc(wiring_config):
             mosi=wiring_config.gpio_pins.mcp3008_din))
 
 
-def make_dht11_sensors(wiring_config):
-    """Creates sensors derived from the DHT11 sensor.
+def make_dht22_sensors(wiring_config):
+    """Creates sensors derived from the DHT22 sensor.
 
     Args:
         wiring_config: Wiring configuration for the GreenPiThumb.
@@ -86,11 +86,11 @@ def make_dht11_sensors(wiring_config):
         A two-tuple where the first element is a temperature sensor and the
         second element is a humidity sensor.
     """
-    local_dht11 = dht11.CachingDHT11(
-        lambda: Adafruit_DHT.read_retry(Adafruit_DHT.DHT11, wiring_config.gpio_pins.dht11),
+    local_dht22 = dht22.CachingDHT22(
+        lambda: Adafruit_DHT.read_retry(Adafruit_DHT.DHT22, wiring_config.gpio_pins.dht22),
         clock.Clock())
     return temperature_sensor.TemperatureSensor(
-        local_dht11), humidity_sensor.HumiditySensor(local_dht11),
+        local_dht22), humidity_sensor.HumiditySensor(local_dht22),
 
 def make_water_level_sensor(raspberry_pi_io, wiring_config):
     return water_level_sensor.WaterLevelSensor(
@@ -230,7 +230,7 @@ def main(args):
     adc = make_adc(wiring_config)
     local_soil_moisture_sensor = make_soil_moisture_sensor(
         adc, raspberry_pi_io, wiring_config)
-    local_temperature_sensor, local_humidity_sensor = make_dht11_sensors(
+    local_temperature_sensor, local_humidity_sensor = make_dht22_sensors(
         wiring_config)
     local_water_level_sensor = make_water_level_sensor(
         raspberry_pi_io, wiring_config)        

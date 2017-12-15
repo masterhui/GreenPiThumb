@@ -7,16 +7,16 @@ logger = logging.getLogger(__name__)
 class TemperatureSensor(object):
     """Wrapper for a temperature sensor."""
 
-    def __init__(self, dht11):
+    def __init__(self, dht22):
         """Creates a new TemperatureSensor wrapper.
 
         Args:
-            dht11: DHT11 sensor instance that returns temperature readings.
+            dht22: DHT22 sensor instance that returns temperature readings.
         """
-        self._dht11 = dht11
+        self._dht22 = dht22
 
     def temperature(self):
         """Returns ambient temperature in Celcius."""
-        temperature = self._dht11.temperature()
+        temperature = self._dht22.temperature()
         logging.info('temperature reading = {0:0.1f} °C'.format(temperature))
         return temperature
