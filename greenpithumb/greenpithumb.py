@@ -134,7 +134,7 @@ def make_pump_manager(moisture_threshold, sleep_windows, raspberry_pi_io,
         wiring_config: Wiring configuration for the GreenPiThumb.
         pump_amount: Amount (in mL) to pump on each run of the pump.
         db_connection: Database connection to use to retrieve pump history.
-        pump_interval: Maximum amount of time between pump runs.
+        pump_interval: Maximum amount of hours between pump runs.
         water_level_sensor: Interface to the water level sensor
 
     Returns:
@@ -153,7 +153,8 @@ def make_pump_manager(moisture_threshold, sleep_windows, raspberry_pi_io,
             (last_pump_time + pump_interval) - clock.Clock().now())
     else:
         logger.info('no previous watering found')
-        time_remaining = datetime.timedelta(seconds=0)
+        #~ time_remaining = datetime.timedelta(seconds=0)   # !!!WARNING!!! Immediately water plants if no previous watering event was found !!!WARNING!!!
+        time_remaining = pump_interval                      # Schedule the first mandatory plant watering event in pump_interval hours
     logger.info('time until until next watering: %s', time_remaining)
     pump_timer.set_remaining(time_remaining)
     return pump.PumpManager(water_pump, pump_scheduler, moisture_threshold,

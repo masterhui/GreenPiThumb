@@ -10,7 +10,7 @@ DISTANCE_CORRECTION_FACTOR =  3.0  # [cm]
 
 
 class WaterLevelSensor(object):
-    """Wrapper for a sonar sensor."""
+    """Wrapper for a Parallax Ping)) sonar sensor."""
 
     def __init__(self, pi_io, gpio_pin):
         """Creates a new WaterLevelSensor instance.
@@ -22,7 +22,7 @@ class WaterLevelSensor(object):
         """
         self._pi_io = pi_io
         self._gpio_pin = gpio_pin
-        self._last_reading = None
+        self._last_reading = 0.0
 
     def water_level(self):
         """Returns the water level.
@@ -80,7 +80,7 @@ class WaterLevelSensor(object):
                 return -1
             else:
                 # Invert, calibrate sensor range and make the value a percentage
-                fill_liters = ((RESERVOIR_EMPTY - distance) / (RESERVOIR_EMPTY - RESERVOIR_FULL)) * 25   # 100 % = 25 liter
+                fill_liters = ((RESERVOIR_EMPTY - distance) / (RESERVOIR_EMPTY - RESERVOIR_FULL)) * 25.0   # 100 % = 25 liter
                 logger.info('water level reading = {0:0.1f} l'.format(fill_liters))
                 self._last_reading = fill_liters
                 return fill_liters

@@ -1,17 +1,20 @@
 import logging
 import email_notification
+import time
 
 logger = logging.getLogger(__name__)
 
-# Pump rate in mL/s (4.3 L/min)
-_PUMP_RATE_ML_PER_SEC = 1433.0 / 60.0
+# Pump rate in ml/s
+_PUMP_RATE_ML_PER_SEC = 1433.0 / 60.0   # Calibration measurement at 1.43 L/min
 
-# Default amount of water to add to the plant (in mL) when pump manager detects
-# low soil moisture.
-DEFAULT_PUMP_AMOUNT = 200
+# Amount of water to be continuously pumped before stopping to allow water to drain and soak
+INTERVAL_PUMP_AMOUNT = 1000   # In [ml]
 
-# Send email notification if water level drops below this value (in l)
-WATER_LEVEL_THRESHOLD = 5.0
+# Interval duration to wait between consecutive pump runs
+INTERVAL_DURATION = 60   # In [s]
+
+# Send email notification if water level drops below this value [l]
+WATER_LEVEL_THRESHOLD = 0.0
 
 
 class Pump(object):
@@ -34,7 +37,7 @@ class Pump(object):
         """Pumps the specified amount of water.
 
         Args:
-            amount_ml: Amount of water to pump (in mL).
+            amount_ml: Amount of water to pump (in ml).
 
         Raises:
             ValueError: The amount of water to be pumped is invalid.
@@ -44,15 +47,15 @@ class Pump(object):
         elif amount_ml < 0.0:
             raise ValueError('Cannot pump a negative amount of water')
         else:
-            logger.info('turning pump on (with GPIO pin %d)', self._pump_pin)
+            logger.info('Turning pump on (with GPIO pin %d)', self._pump_pin)
             self._pi_io.turn_pin_on(self._pump_pin)
 
             wait_time_seconds = amount_ml / _PUMP_RATE_ML_PER_SEC
             self._clock.wait(wait_time_seconds)
 
-            logger.info('turning pump off (with GPIO pin %d)', self._pump_pin)
+            logger.info('Turning pump off (with GPIO pin %d)', self._pump_pin)
             self._pi_io.turn_pin_off(self._pump_pin)
-            logger.info('pumped %.f mL of water', amount_ml)
+            logger.info('Pumped %.f ml of water', amount_ml)
             
             # Read water level and check if a notification email should be sent
             if (self._water_level_sensor._last_reading < WATER_LEVEL_THRESHOLD):
@@ -68,7 +71,7 @@ class Pump(object):
 class PumpManager(object):
     """Pump Manager manages the water pump."""
 
-    def __init__(self, pump, pump_scheduler, moisture_threshold, pump_amount,
+    def __init__(self, pump, pump_scheduler, moisture_threshold, total_pump_amount,
                  timer):
         """Creates a PumpManager object, which manages a water pump.
 
@@ -78,7 +81,7 @@ class PumpManager(object):
                 periods in which the pump can be run.
             moisture_threshold: Soil moisture threshold. If soil moisture is
                 below this value, manager pumps water on pump_if_needed calls.
-            pump_amount: Amount (in mL) to pump every time the water pump runs.
+            total_pump_amount: Total amount (in ml) to pump every time the water pump runs.
             timer: A timer that counts down until the next forced pump. When
                 this timer expires, the pump manager runs the pump once,
                 regardless of the moisture level.
@@ -86,8 +89,12 @@ class PumpManager(object):
         self._pump = pump
         self._pump_scheduler = pump_scheduler
         self._moisture_threshold = moisture_threshold
-        self._pump_amount = pump_amount
+        self._total_pump_amount = total_pump_amount
         self._timer = timer
+        self._pump_event_in_progress = False
+        
+    def pump_event_in_progress():
+        return self._pump_event_in_progress
 
     def pump_if_needed(self, moisture):
         """Run the water pump if there is a need to run it.
@@ -98,18 +105,55 @@ class PumpManager(object):
         Returns:
             The amount of water pumped, in mL.
         """
+        accumulated_pump_amount = 0
+        i = 0
         if self._should_pump(moisture):
-            self._pump.pump_water(self._pump_amount)
-            self._timer.reset()
-            return self._pump_amount
-
-        return 0
+            # Loop until total water amount to be pumped is reached
+            self._pump_event_in_progress = True
+            
+            while(True):
+                accumulated_pump_amount += INTERVAL_PUMP_AMOUNT
+                i += 1                 
+                logger.info("({}.) Pumping {} ml of water ({} ml of {} ml done)".format(i, INTERVAL_PUMP_AMOUNT, accumulated_pump_amount, self._total_pump_amount))
+                self._pump.pump_water(INTERVAL_PUMP_AMOUNT)
+                
+               # Check fail condition
+                if(accumulated_pump_amount >= self._total_pump_amount):
+                    break                
+                
+                logger.info("Sleep for {} s to allow water to drain and soak".format(INTERVAL_DURATION))
+                time.sleep(INTERVAL_DURATION)
+                logger.info("Continue water pump event...")             
+            
+            self._pump_event_in_progress = False
+            
+        logger.info("==>Pump event complete, total amount pumped {} ml".format(accumulated_pump_amount))
+        return accumulated_pump_amount
 
     def _should_pump(self, moisture):
         """Returns True if the pump should be run."""
-        if not self._pump_scheduler.is_running_pump_allowed():
-            return False
-        return (moisture < self._moisture_threshold) or self._timer.expired()
+        retVal = False
+
+        # Collect pumping criteria        
+        is_sleep_window = self._pump_scheduler.is_sleep_window()
+        timer_expired = self._timer.expired()
+        moisture_below_threshold = (moisture < self._moisture_threshold)
+        pump_event_in_progress = self._pump_event_in_progress
+        
+        # Debug output
+        logger.info("[should_pump] is_sleep_window = " + str(is_sleep_window))
+        logger.info("[should_pump] timer_expired = " + str(timer_expired))
+        logger.info("[should_pump] moisture_below_threshold = " + str(moisture_below_threshold))
+        logger.info("[should_pump] pump_event_in_progress = " + str(pump_event_in_progress))
+        
+        # Determine whether we need to pump
+        if( (timer_expired or moisture_below_threshold) and not (pump_event_in_progress or is_sleep_window) ):
+            retVal = True
+        else:
+            retVal = False
+            
+        logger.info("[should_pump] retVal = " + str(retVal))
+        return retVal      
 
 
 class PumpScheduler(object):
@@ -126,8 +170,9 @@ class PumpScheduler(object):
         self._local_clock = local_clock
         self._sleep_windows = sleep_windows
 
-    def is_running_pump_allowed(self):
-        """Returns True if OK to run pump, otherwise False.
+    def is_sleep_window(self):
+        """Returns True if we're currently within the sleep time window
+          and the pump must not run, otherwise False.
 
         Pump is not allowed to run from the start of a sleep window (inclusive)
         to the end of a sleep window (exclusive).
@@ -138,9 +183,9 @@ class PumpScheduler(object):
             # Check if sleep window wraps midnight.
             if wake_time < sleep_time:
                 if current_time >= sleep_time or current_time < wake_time:
-                    return False
+                    return True
             else:
                 if sleep_time <= current_time < wake_time:
-                    return False
+                    return True
 
-        return True
+        return False
