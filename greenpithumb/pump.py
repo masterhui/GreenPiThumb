@@ -11,7 +11,7 @@ _PUMP_RATE_ML_PER_SEC = 1433.0 / 60.0
 DEFAULT_PUMP_AMOUNT = 200
 
 # Send email notification if water level drops below this value (in l)
-WATER_LEVEL_THRESHOLD = 5
+WATER_LEVEL_THRESHOLD = 5.0
 
 
 class Pump(object):
@@ -57,8 +57,8 @@ class Pump(object):
             # Read water level and check if a notification email should be sent
             if (self._water_level_sensor._last_reading < WATER_LEVEL_THRESHOLD):
                 subject = "GreenPiThumb low water tank level"
-                body = "The water tank fill level has dropped below the set alert threshold of {0:0.1f} liters.\n\n" + \
-                       "The current fill level is {0:0.1f} liters.".format(WATER_LEVEL_THRESHOLD, self._water_level_sensor._last_reading)
+                body = "The water tank fill level has dropped below the set alert threshold of {0:0.1f} liters.\n\n".format(WATER_LEVEL_THRESHOLD) + \
+                       "The current fill level is {0:0.1f} liters.".format(self._water_level_sensor._last_reading)
                 logger.info("Low water tank level detected: {0:0.1f} liters (threshold={0:0.1f} liters), sending notification email".format(self._water_level_sensor._last_reading, WATER_LEVEL_THRESHOLD))
                 notifier = email_notification.EmailNotification(subject, body)
                 notifier.send()
