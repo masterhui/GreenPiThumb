@@ -10,6 +10,7 @@ WET_VALUE = 300.0
 class SoilMoistureSensor(object):
     """Wrapper for a moisture sensor."""
 
+
     def __init__(self, adc, pi_io, channel, gpio_pin):
         """Creates a new SoilMoistureSensor instance.
 
@@ -26,6 +27,7 @@ class SoilMoistureSensor(object):
         self._pi_io = pi_io
         self._channel = channel
         self._gpio_pin = gpio_pin
+        
 
     def soil_moisture(self):
         """Returns the soil moisture level as volumetric water content (VWC).
@@ -40,13 +42,16 @@ class SoilMoistureSensor(object):
         time.sleep(2.0)   # Wait time in seconds
 
         # Take sensor reading
-        voltage_int = self._adc.read_adc(self._channel)
-        logger.info('vh400 voltage reading = %d', voltage_int)
+        raw_value = self._adc.read_adc(self._channel)
+        logger.info('vh400 raw value = {}'.format(raw_value))
+        
+        # Convert to voltage
+        voltage = raw_value / 100.0
+        logger.info('vh400 voltage = {0:0.2f} v'.format(voltage))
             
-        # Calculate volumetric water content from voltage
-        voltage_float = voltage_int / 100.0
-        vwc = calc_vwc(voltage_float)
-        logger.info('vh400 VWC reading = {0:0.1f} %'.format(moisture_corrected))
+        # Calculate volumetric water content from voltage        
+        vwc = calc_vwc(voltage)
+        logger.info('vh400 vwc reading = {0:0.1f} %'.format(vwc))
         
         # Sensor cooldown time
         time.sleep(2.0)   # Wait time in seconds
@@ -55,6 +60,7 @@ class SoilMoistureSensor(object):
         self._pi_io.turn_pin_on(self._gpio_pin)
         
         return vwc
+        
 
     def calc_vwc(V):
         """Returns the Volumetric Water Content (VWC)
@@ -89,9 +95,9 @@ class SoilMoistureSensor(object):
         """
         VWC = 0.0
         
-        if(V < 0.0)
-            logger.warn('vh400 voltage below 0.0 volts: {0:0.1f}v'.format(V))
-        elif(V => 0.0 and V < 1.1):
+        if(V < 0.0):
+            logger.warn('vh400 voltage below 0.0 volts: {0:0.2f} v'.format(V))
+        elif(V >= 0.0 and V < 1.1):
             VWC = 10.0 * V - 1.0            
         elif(V >= 1.1 and V < 1.3):
             VWC = 25.0 * V - 17.5
@@ -102,8 +108,8 @@ class SoilMoistureSensor(object):
         elif(V >= 2.2 and V < 3.0):
             VWC = 62.5 * V - 87.5
         elif(V > 3.0):
-            logger.warn('vh400 voltage above 3.0 volts: {0:0.1f}v'.format(V))
+            logger.warn('vh400 voltage above 3.0 volts: {0:0.2f} v'.format(V))
             
-        return vwc
+        return VWC
       
       
