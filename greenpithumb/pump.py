@@ -14,7 +14,7 @@ INTERVAL_PUMP_AMOUNT = 1000   # In [ml]
 INTERVAL_DURATION = 60   # In [s]
 
 # Send email notification if water level drops below this value [l]
-WATER_LEVEL_THRESHOLD = 0.0
+WATER_LEVEL_THRESHOLD = 5.0
 
 
 class Pump(object):
@@ -126,8 +126,8 @@ class PumpManager(object):
                 logger.info("Continue water pump event...")             
             
             self._pump_event_in_progress = False
+            logger.info("==> Pump event complete, total amount pumped {} ml".format(accumulated_pump_amount))
             
-        logger.info("==>Pump event complete, total amount pumped {} ml".format(accumulated_pump_amount))
         return accumulated_pump_amount
 
     def _should_pump(self, moisture):

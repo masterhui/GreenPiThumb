@@ -63,9 +63,15 @@ class CachingDHT22(object):
     def humidity(self):
         """Returns a recent relative humidity reading."""
         humidity = self._read_dht22()[_HUMIDITY_INDEX]
-        return humidity + HUMIDITY_CORRECTION
+        if (humidity):
+            return humidity + HUMIDITY_CORRECTION
+        else:
+            return 0.0
 
     def temperature(self):
         """Returns a recent ambient temperature reading in Celsius."""
         temperature = self._read_dht22()[_TEMPERATURE_INDEX]
-        return temperature + TEMPERATURE_CORRECTION
+        if (temperature):
+            return temperature + TEMPERATURE_CORRECTION
+        else:
+            return 0.0
