@@ -1,10 +1,7 @@
 import logging
+import time
 
 logger = logging.getLogger(__name__)
-
-# Measured VH400 sensor air and wet values
-AIR_VALUE = 0.0
-WET_VALUE = 300.0
 
 
 class SoilMoistureSensor(object):
@@ -28,41 +25,8 @@ class SoilMoistureSensor(object):
         self._channel = channel
         self._gpio_pin = gpio_pin
         
-
-    def soil_moisture(self):
-        """Returns the soil moisture level as volumetric water content (VWC).
-
-        Takes a reading from the soil moisture sensor by powering the GPIO pin the
-        sensor is connected to.
-        """
-        # Turn device power on
-        self._pi_io.turn_pin_on(self._gpio_pin)
         
-        # Sensor startup time
-        time.sleep(2.0)   # Wait time in seconds
-
-        # Take sensor reading
-        raw_value = self._adc.read_adc(self._channel)
-        logger.info('vh400 raw value = {}'.format(raw_value))
-        
-        # Convert to voltage
-        voltage = raw_value / 100.0
-        logger.info('vh400 voltage = {0:0.2f} v'.format(voltage))
-            
-        # Calculate volumetric water content from voltage        
-        vwc = calc_vwc(voltage)
-        logger.info('vh400 vwc reading = {0:0.1f} %'.format(vwc))
-        
-        # Sensor cooldown time
-        time.sleep(2.0)   # Wait time in seconds
-        
-        # Turn device power off
-        self._pi_io.turn_pin_on(self._gpio_pin)
-        
-        return vwc
-        
-
-    def calc_vwc(V):
+    def calc_vwc(self, V):
         """Returns the Volumetric Water Content (VWC)
         Most curves can be approximated with linear segments of the form:
 
@@ -108,8 +72,41 @@ class SoilMoistureSensor(object):
         elif(V >= 2.2 and V < 3.0):
             VWC = 62.5 * V - 87.5
         elif(V > 3.0):
-            logger.warn('vh400 voltage above 3.0 volts: {0:0.2f} v'.format(V))
+            VWC = 62.5 * V - 87.5
             
-        return VWC
+        return VWC/2.0   # Divide by two based on measurement with dry and wet soil        
+        
+
+    def soil_moisture(self):
+        """Returns the soil moisture level as volumetric water content (VWC).
+
+        Takes a reading from the soil moisture sensor by powering the GPIO pin the
+        sensor is connected to.
+        """
+        # Turn device power on
+        self._pi_io.turn_pin_on(self._gpio_pin)
+        
+        # Sensor startup time
+        time.sleep(2.0)   # Wait time in seconds
+
+        # Take sensor reading
+        raw_value = self._adc.read_adc(self._channel)
+        logger.info('vh400 raw value = {}'.format(raw_value))
+        
+        # Convert to voltage
+        voltage = raw_value / 100.0
+        logger.info('vh400 voltage = {0:0.2f} v'.format(voltage))
+            
+        # Calculate volumetric water content from voltage        
+        vwc = self.calc_vwc(voltage)
+        logger.info('vh400 vwc reading = {0:0.1f} %'.format(vwc))
+        
+        # Sensor cooldown time
+        #time.sleep(2.0)   # Wait time in seconds
+        
+        # Turn device power off
+        self._pi_io.turn_pin_on(self._gpio_pin)
+        
+        return vwc
       
       

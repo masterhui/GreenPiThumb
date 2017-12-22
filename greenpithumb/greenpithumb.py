@@ -23,7 +23,8 @@ import pump
 import pump_history
 import record_processor
 import sleep_windows
-import soil_moisture_sensor
+#import soil_moisture_sensor
+import vegetronix_vh400
 import water_level_sensor
 import temperature_sensor
 import wiring_config_parser
@@ -97,9 +98,9 @@ def make_water_level_sensor(raspberry_pi_io, wiring_config):
         raspberry_pi_io, wiring_config.gpio_pins.sonar)
 
 def make_soil_moisture_sensor(adc, raspberry_pi_io, wiring_config):
-    return soil_moisture_sensor.SoilMoistureSensor(
+    return vegetronix_vh400.SoilMoistureSensor(
         adc, raspberry_pi_io, wiring_config.adc_channels.soil_moisture_sensor,
-        wiring_config.gpio_pins.soil_moisture)
+        wiring_config.gpio_pins.soil_moisture_power)
 
 def make_light_sensor(adc, wiring_config):
     return light_sensor.LightSensor(adc,
