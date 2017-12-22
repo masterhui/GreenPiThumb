@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # For each record, timestamp is a datetime representing the time of the reading
 # or event.
 SoilMoistureRecord = collections.namedtuple('SoilMoistureRecord',
-                                            ['timestamp', 'soil_moisture'])
+                                            ['timestamp', 'soil_moisture', 'water_present'])
 LightRecord = collections.namedtuple('LightRecord', ['timestamp', 'light'])
 HumidityRecord = collections.namedtuple('HumidityRecord',
                                         ['timestamp', 'humidity'])
@@ -46,7 +46,8 @@ CREATE TABLE water_level
 CREATE TABLE soil_moisture
 (
     timestamp TEXT,
-    soil_moisture INTEGER
+    soil_moisture INTEGER,
+    water_present BOOL
 );
 CREATE TABLE light
 (
@@ -126,17 +127,25 @@ class _DbStoreBase(object):
         self._connection = connection
         self._cursor = connection.cursor()
 
-    def _do_insert(self, sql, timestamp, value):
+    def _do_insert(self, sql, timestamp, value1, value2=None):
         """Executes and commits a SQL insert command.
 
         Args:
           sql: SQL query string for the insert command.
           timestamp: datetime instance representing the record timestamp.
-          value: Value to insert for the record.
+          value1: Value 1 to insert for the record.
+          value2: Value 2 to insert for the record.
         """
         timestamp_utc = _timestamp_to_utc(timestamp)
-        self._cursor.execute(sql, (timestamp_utc.strftime(_TIMESTAMP_FORMAT),
-                                   value))
+        
+        # Insert timestamp, value1, value2 (used for inserting water_present)
+        #logger.info("_do_insert() value1={} value2={}".format(value1, value2))
+        if value2 is not None:
+            self._cursor.execute(sql, (timestamp_utc.strftime(_TIMESTAMP_FORMAT), value1, value2))
+        # Insert timestamp, value1 (standard insert)
+        else:
+            self._cursor.execute(sql, (timestamp_utc.strftime(_TIMESTAMP_FORMAT), value1))
+        
         self._connection.commit()
 
     def _do_get(self, sql, record_type):
@@ -161,23 +170,24 @@ class _DbStoreBase(object):
 
 
 class SoilMoistureStore(_DbStoreBase):
-    """Stores and retrieves timestamp and soil moisture readings."""
+    """Stores and retrieves timestamp, soil moisture and water present readings."""
 
     def insert(self, soil_moisture_record):
-        """Inserts moisture and timestamp info into an SQLite database.
+        """Inserts timestamp, moisture and water present info into an SQLite database.
 
         Args:
             soil_moisture_record: Moisture record to store.
         """
-        self._do_insert('INSERT INTO soil_moisture VALUES (?, ?)',
+        self._do_insert('INSERT INTO soil_moisture VALUES (?, ?, ?)',
                         soil_moisture_record.timestamp,
-                        soil_moisture_record.soil_moisture)
+                        soil_moisture_record.soil_moisture,
+                        soil_moisture_record.water_present)
 
     def get(self):
-        """Retrieves timestamp and soil moisture readings.
+        """Retrieves timestamp, soil moisture and water present readings.
 
         Returns:
-            A list of objects with 'timestamp' and 'soil_moisture' fields.
+            A list of objects with 'timestamp', 'soil_moisture' and 'water_present' fields.
         """
         return self._do_get('SELECT * FROM soil_moisture', SoilMoistureRecord)
 

@@ -54,10 +54,10 @@ class SensorPollerFactory(object):
             _LightPollWorker(self._make_scheduler_func(), self._record_queue,
                              light_sensor))
 
-    def create_soil_watering_poller(self, soil_moisture_sensor, pump_manager):
+    def create_soil_watering_poller(self, soil_moisture_sensor, drain_sensor, pump_manager):
         return _SensorPoller(
             _SoilWateringPollWorker(self._make_scheduler_func(
-            ), self._record_queue, soil_moisture_sensor, pump_manager))
+            ), self._record_queue, soil_moisture_sensor, drain_sensor, pump_manager))
 
     def create_camera_poller(self, camera_manager):
         return _SensorPoller(
@@ -244,7 +244,7 @@ class _SoilWateringPollWorker(_SensorPollWorkerBase):
     the moisture drops too low. Records both soil moisture and watering events.
     """
 
-    def __init__(self, scheduler, record_queue, soil_moisture_sensor,
+    def __init__(self, scheduler, record_queue, soil_moisture_sensor, drain_sensor, 
                  pump_manager):
         """Creates a new SoilWateringPoller object.
 
@@ -254,10 +254,12 @@ class _SoilWateringPollWorker(_SensorPollWorkerBase):
                 watering event records for storage.
             soil_moisture_sensor: An interface for reading the soil moisture
                 level.
+            drain_sensor: An interface for reading the drain sensor.
             pump_manager: An interface to manage a water pump.
         """
         super(_SoilWateringPollWorker, self).__init__(scheduler, record_queue,
                                                       soil_moisture_sensor)
+        self._drain_sensor = drain_sensor
         self._pump_manager = pump_manager
 
     def _poll_once(self):
@@ -268,10 +270,11 @@ class _SoilWateringPollWorker(_SensorPollWorkerBase):
         runs the pump and records the watering event.
         """
         soil_moisture = self._sensor.soil_moisture()
+        water_present = self._drain_sensor.water_present()
         self._record_queue.put(
             db_store.SoilMoistureRecord(self._scheduler.last_poll_time(),
-                                        soil_moisture))
-        ml_pumped = self._pump_manager.pump_if_needed(soil_moisture)
+                                        soil_moisture, water_present))
+        ml_pumped = self._pump_manager.pump_if_needed(soil_moisture, water_present)
         if ml_pumped > 0:
             self._record_queue.put(
                 db_store.WateringEventRecord(self._scheduler.last_poll_time(),

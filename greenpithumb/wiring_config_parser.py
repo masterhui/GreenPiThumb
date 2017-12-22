@@ -30,8 +30,8 @@ class DuplicateAdcChannelError(Error):
 
 # Represents GreenPiThumb's Rapsberry Pi GPIO pin configuration.
 _GpioPinConfig = collections.namedtuple('_GpioPinConfig', [
-    'pump', 'dht22', 'sonar', 'soil_moisture_power', 'mcp3008_clk', 'mcp3008_dout',
-    'mcp3008_din', 'mcp3008_cs_shdn'
+    'pump', 'dht22', 'sonar', 'soil_moisture_power', 'drain_sensor_power', 
+    'mcp3008_clk', 'mcp3008_dout', 'mcp3008_din', 'mcp3008_cs_shdn'
 ])
 
 
@@ -60,13 +60,18 @@ def _validate_gpio_pin_config(gpio_config):
 class _AdcChannelConfig(object):
     """Represents GreenPiThumb's ADC channel configuration."""
 
-    def __init__(self, soil_moisture_sensor, light_sensor):
+    def __init__(self, soil_moisture_sensor, drain_sensor, light_sensor):
         self._soil_moisture_sensor = soil_moisture_sensor
+        self._drain_sensor = drain_sensor
         self._light_sensor = light_sensor
 
     @property
     def soil_moisture_sensor(self):
         return self._soil_moisture_sensor
+        
+    @property
+    def drain_sensor(self):
+        return self._drain_sensor       
 
     @property
     def light_sensor(self):
@@ -83,10 +88,14 @@ def _validate_adc_channel_config(adc_config):
         DuplicateAdcChannelError when the same ADC channel is assigned to
             multiple components.
     """
-    if adc_config.soil_moisture_sensor == adc_config.light_sensor:
+    if (adc_config.soil_moisture_sensor == adc_config.light_sensor) or \
+       (adc_config.soil_moisture_sensor == adc_config.drain_sensor) or \
+       (adc_config.drain_sensor == adc_config.light_sensor):
         raise DuplicateAdcChannelError(
-            'Soil moisture sensor and light sensor cannot have the same ADC '
-            'channel: %d' % adc_config.soil_moisture_sensor)
+            'None of the sensors may have the same ADC '
+            'channel: %d %d %d' % adc_config.soil_moisture_sensor,
+                                  adc_config.drain_sensor,
+                                  adc_config.light_sensor)
 
 
 class _WiringConfig(object):
@@ -175,11 +184,13 @@ def parse(config_data):
             * gpio_pins.dht22
             * gpio_pins.sonar
             * gpio_pins.soil_moisture_power
+            * gpio_pins.drain_sensor_power
             * gpio_pins.mcp3008_clk
             * gpio_pins.mcp3008_dout
             * gpio_pins.mcp3008_din
             * gpio_pins.mcp3008_cs_shdn
             * adc_channels.soil_moisture_sensor
+            * adc_channels.drain_sensor
             * adc_channels.light_sensor
     """
     raw_parser = ConfigParser.RawConfigParser()
@@ -191,6 +202,8 @@ def parse(config_data):
             sonar=_parse_gpio_pin(raw_parser.get('gpio_pins', 'sonar')),
             soil_moisture_power=_parse_gpio_pin(
                 raw_parser.get('gpio_pins', 'soil_moisture_power')),
+            drain_sensor_power=_parse_gpio_pin(
+                raw_parser.get('gpio_pins', 'drain_sensor_power')),                
             mcp3008_clk=_parse_gpio_pin(
                 raw_parser.get('gpio_pins', 'mcp3008_clk')),
             mcp3008_din=_parse_gpio_pin(
@@ -203,6 +216,8 @@ def parse(config_data):
         adc_channel_config = _AdcChannelConfig(
             soil_moisture_sensor=_parse_adc_channel(
                 raw_parser.get('adc_channels', 'soil_moisture_sensor')),
+            drain_sensor=_parse_adc_channel(
+                raw_parser.get('adc_channels', 'drain_sensor')),                
             light_sensor=_parse_adc_channel(
                 raw_parser.get('adc_channels', 'light_sensor')))
         _validate_adc_channel_config(adc_channel_config)

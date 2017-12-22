@@ -25,6 +25,7 @@ import record_processor
 import sleep_windows
 #import soil_moisture_sensor
 import vegetronix_vh400
+import drain_sensor
 import water_level_sensor
 import temperature_sensor
 import wiring_config_parser
@@ -101,6 +102,11 @@ def make_soil_moisture_sensor(adc, raspberry_pi_io, wiring_config):
     return vegetronix_vh400.SoilMoistureSensor(
         adc, raspberry_pi_io, wiring_config.adc_channels.soil_moisture_sensor,
         wiring_config.gpio_pins.soil_moisture_power)
+        
+def make_drain_sensor(adc, raspberry_pi_io, wiring_config):
+    return drain_sensor.DrainSensor(
+        adc, raspberry_pi_io, wiring_config.adc_channels.drain_sensor,
+        wiring_config.gpio_pins.drain_sensor_power)        
 
 def make_light_sensor(adc, wiring_config):
     return light_sensor.LightSensor(adc,
@@ -164,7 +170,7 @@ def make_pump_manager(moisture_threshold, sleep_windows, raspberry_pi_io,
 
 def make_sensor_pollers(poll_interval, photo_interval, record_queue,
                         temperature_sensor, humidity_sensor, water_level_sensor,
-                        soil_moisture_sensor, light_sensor, camera_manager,
+                        soil_moisture_sensor, drain_sensor, light_sensor, camera_manager,
                         pump_manager):
     """Creates a poller for each GreenPiThumb sensor.
 
@@ -176,6 +182,7 @@ def make_sensor_pollers(poll_interval, photo_interval, record_queue,
         humidity_sensor: Sensor for measuring humidity.
         water_level_sensor: Sensor for measuring the reservoir water level.
         soil_moisture_sensor: Sensor for measuring soil moisture.
+        drain_sensor: Sensor for measuring wheather water has drained through the plant pot.
         light_sensor: Sensor for measuring light levels.
         camera_manager: Interface for capturing photos.
         pump_manager: Interface for turning water pump on and off.
@@ -199,8 +206,7 @@ def make_sensor_pollers(poll_interval, photo_interval, record_queue,
         poller_factory.create_humidity_poller(humidity_sensor),
         poller_factory.create_water_level_poller(water_level_sensor),
         poller_factory.create_soil_watering_poller(
-            soil_moisture_sensor,
-            pump_manager),
+            soil_moisture_sensor, drain_sensor, pump_manager),
         poller_factory.create_light_poller(light_sensor),
         camera_poller_factory.create_camera_poller(camera_manager)
     ]  # yapf: disable
@@ -232,6 +238,8 @@ def main(args):
     adc = make_adc(wiring_config)
     local_soil_moisture_sensor = make_soil_moisture_sensor(
         adc, raspberry_pi_io, wiring_config)
+    local_drain_sensor = make_drain_sensor(
+        adc, raspberry_pi_io, wiring_config)
     local_temperature_sensor, local_humidity_sensor = make_dht22_sensors(
         wiring_config)
     local_water_level_sensor = make_water_level_sensor(
@@ -260,6 +268,7 @@ def main(args):
             local_humidity_sensor,
             local_water_level_sensor,
             local_soil_moisture_sensor,
+            local_drain_sensor,
             local_light_sensor,
             camera_manager,
             pump_manager)

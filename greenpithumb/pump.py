@@ -96,11 +96,12 @@ class PumpManager(object):
     def pump_event_in_progress():
         return self._pump_event_in_progress
 
-    def pump_if_needed(self, moisture):
+    def pump_if_needed(self, moisture, water_present):
         """Run the water pump if there is a need to run it.
 
         Args:
             moisture: Soil moisture level
+            water_present: Whether water is present
 
         Returns:
             The amount of water pumped, in mL.
@@ -117,9 +118,13 @@ class PumpManager(object):
                 logger.info("({}.) Pumping {} ml of water ({} ml of {} ml done)".format(i, INTERVAL_PUMP_AMOUNT, accumulated_pump_amount, self._total_pump_amount))
                 self._pump.pump_water(INTERVAL_PUMP_AMOUNT)
                 
-               # Check fail condition
+                # Check fail conditions
                 if(accumulated_pump_amount >= self._total_pump_amount):
-                    break                
+                    logger.info("Total pump amount reached, end pump task")
+                    break
+                if(water_present):
+                    logger.info("___Water detected by drain sensor, end pump task___")
+                    break                    
                 
                 logger.info("Sleep for {} s to allow water to drain and soak".format(INTERVAL_DURATION))
                 time.sleep(INTERVAL_DURATION)
