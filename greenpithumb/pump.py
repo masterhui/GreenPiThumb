@@ -8,13 +8,13 @@ logger = logging.getLogger(__name__)
 _PUMP_RATE_ML_PER_SEC = 1433.0 / 60.0   # Calibration measurement at 1.43 L/min
 
 # Amount of water to be continuously pumped before stopping to allow water to drain and soak
-INTERVAL_PUMP_AMOUNT = 1000   # In [ml]
+INTERVAL_PUMP_AMOUNT = 500   # In [ml]
 
 # Interval duration to wait between consecutive pump runs
-INTERVAL_DURATION = 60   # In [s]
+INTERVAL_DURATION = 30   # In [s]
 
 # Send email notification if water level drops below this value [l]
-WATER_LEVEL_THRESHOLD = 5.0
+WATER_LEVEL_THRESHOLD = 7.5
 
 
 class Pump(object):

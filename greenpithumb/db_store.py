@@ -46,8 +46,8 @@ CREATE TABLE water_level
 CREATE TABLE soil_moisture
 (
     timestamp TEXT,
-    soil_moisture INTEGER,
-    water_present BOOL
+    soil_moisture REAL,
+    water_present REAL
 );
 CREATE TABLE light
 (

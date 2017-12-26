@@ -71,7 +71,7 @@ class SoilMoistureSensor(object):
             VWC = 26.32 * V - 7.89
         elif(V >= 2.2 and V < 3.0):
             VWC = 62.5 * V - 87.5
-        elif(V > 3.0):
+        elif(V >= 3.0):
             VWC = 62.5 * V - 87.5
             
         return VWC/2.0   # Divide by two based on measurement with dry and wet soil        
