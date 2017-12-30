@@ -47,7 +47,7 @@ CREATE TABLE soil_moisture
 (
     timestamp TEXT,
     soil_moisture REAL,
-    water_present REAL
+    water_present INTEGER
 );
 CREATE TABLE light
 (
@@ -57,7 +57,7 @@ CREATE TABLE light
 CREATE TABLE watering_events
 (
     timestamp TEXT,
-    water_pumped REAL   --amount of water pumped (in mL)
+    water_pumped REAL   --amount of water pumped (in ml)
 );
 """
 
@@ -138,22 +138,23 @@ class _DbStoreBase(object):
         """
         timestamp_utc = _timestamp_to_utc(timestamp)
         
-        # Insert timestamp, value1, value2 (used for inserting water_present)
+        # Insert timestamp, value1, value2 (when inserting water_present)
         #logger.info("_do_insert() value1={} value2={}".format(value1, value2))
         if value2 is not None:
             self._cursor.execute(sql, (timestamp_utc.strftime(_TIMESTAMP_FORMAT), value1, value2))
-        # Insert timestamp, value1 (standard insert)
+        # Insert timestamp, value1 (standard case)
         else:
             self._cursor.execute(sql, (timestamp_utc.strftime(_TIMESTAMP_FORMAT), value1))
         
         self._connection.commit()
 
-    def _do_get(self, sql, record_type):
+    def _do_get(self, sql, record_type, is_soil_moisture_record=None):
         """Executes a SQL select query and returns the results.
 
         Args:
           sql: SQL select query string.
           record_type: The record type to parse the SQL results into.
+          is_soil_moisture_record: Flag indicating that this is a soil moisture record.
 
         Returns:
           A list of database records corresponding to the select query.
@@ -161,10 +162,15 @@ class _DbStoreBase(object):
         self._cursor.execute(sql)
         data = []
         for row in self._cursor.fetchall():
-            timestamp = datetime.datetime.strptime(row[0],
-                                                   _TIMESTAMP_FORMAT).replace(
-                                                       tzinfo=pytz.utc)
-            data.append((timestamp, row[1]))
+            timestamp = datetime.datetime.strptime(row[0], _TIMESTAMP_FORMAT).replace(tzinfo=pytz.utc)
+            
+            # Append timestamp, field1, field2 (when appending water_present)
+            if is_soil_moisture_record is not None:
+                data.append((timestamp, row[1], row[2]))
+            # Append timestamp, field1 (standard case)
+            else:
+                data.append((timestamp, row[1]))
+
         typed_data = map(record_type._make, data)
         return typed_data
 
@@ -189,7 +195,7 @@ class SoilMoistureStore(_DbStoreBase):
         Returns:
             A list of objects with 'timestamp', 'soil_moisture' and 'water_present' fields.
         """
-        return self._do_get('SELECT * FROM soil_moisture', SoilMoistureRecord)
+        return self._do_get('SELECT * FROM soil_moisture', SoilMoistureRecord, True)
 
 
 class LightStore(_DbStoreBase):
