@@ -271,14 +271,10 @@ class _SoilWateringPollWorker(_SensorPollWorkerBase):
         """
         soil_moisture = self._sensor.soil_moisture()
         water_present = self._drain_sensor.water_present()
-        self._record_queue.put(
-            db_store.SoilMoistureRecord(self._scheduler.last_poll_time(),
-                                        soil_moisture, water_present))
-        ml_pumped = self._pump_manager.pump_if_needed(soil_moisture, water_present)
+        self._record_queue.put(db_store.SoilMoistureRecord(self._scheduler.last_poll_time(), soil_moisture, water_present))        
+        ml_pumped = self._pump_manager.pump_if_needed(soil_moisture, self._drain_sensor)
         if ml_pumped > 0:
-            self._record_queue.put(
-                db_store.WateringEventRecord(self._scheduler.last_poll_time(),
-                                             ml_pumped))
+            self._record_queue.put(db_store.WateringEventRecord(self._scheduler.last_poll_time(), ml_pumped))
 
 
 class _CameraPollWorker(_SensorPollWorkerBase):

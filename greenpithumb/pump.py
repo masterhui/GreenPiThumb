@@ -11,7 +11,7 @@ _PUMP_RATE_ML_PER_SEC = 1433.0 / 60.0   # Calibration measurement at 1.43 L/min
 INTERVAL_PUMP_AMOUNT = 500   # In [ml]
 
 # Interval duration to wait between consecutive pump runs
-INTERVAL_DURATION = 30   # In [s]
+INTERVAL_DURATION = 60   # In [s]
 
 # Send email notification if water level drops below this value [l]
 WATER_LEVEL_THRESHOLD = 7.5
@@ -96,15 +96,15 @@ class PumpManager(object):
     def pump_event_in_progress():
         return self._pump_event_in_progress
 
-    def pump_if_needed(self, moisture, water_present):
+    def pump_if_needed(self, moisture, drain_sensor):
         """Run the water pump if there is a need to run it.
 
         Args:
-            moisture: Soil moisture level
-            water_present: Whether water is present
+            moisture: Soil moisture level.
+            drain_sensor: Interface to the drain sensor.
 
         Returns:
-            The amount of water pumped, in mL.
+            The amount of water pumped, in ml.
         """
         accumulated_pump_amount = 0
         i = 0
@@ -122,7 +122,7 @@ class PumpManager(object):
                 if(accumulated_pump_amount >= self._total_pump_amount):
                     logger.info("Total pump amount reached, end pump task")
                     break
-                if(water_present):
+                if(drain_sensor.water_present()):
                     logger.info("___Water detected by drain sensor, end pump task___")
                     break                    
                 
