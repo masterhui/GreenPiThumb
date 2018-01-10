@@ -56,15 +56,7 @@ class Pump(object):
             logger.info('Turning pump off (with GPIO pin %d)', self._pump_pin)
             self._pi_io.turn_pin_off(self._pump_pin)
             logger.info('Pumped %.f ml of water', amount_ml)
-            
-            # Read water level and check if a notification email should be sent
-            if (self._water_level_sensor.water_level() < WATER_LEVEL_THRESHOLD):
-                subject = "GreenPiThumb low water tank level"
-                body = "The water tank fill level has dropped below the set alert threshold of {0:0.1f} liters.\n\n".format(WATER_LEVEL_THRESHOLD) + \
-                       "The current fill level is {0:0.1f} liters.".format(self._water_level_sensor._last_reading)
-                logger.info("Low water tank level detected: {0:0.1f} liters (threshold={0:0.1f} liters), sending notification email".format(self._water_level_sensor._last_reading, WATER_LEVEL_THRESHOLD))
-                notifier = email_notification.EmailNotification(subject, body)
-                notifier.send()
+
         return
 
 
@@ -97,7 +89,7 @@ class PumpManager(object):
         return self._pump_event_in_progress
 
     def pump_if_needed(self, moisture, drain_sensor):
-        """Run the water pump if there is a need to run it.
+        """Run the water pump if required.
 
         Args:
             moisture: Soil moisture level.
@@ -108,7 +100,7 @@ class PumpManager(object):
         """
         accumulated_pump_amount = 0
         i = 0
-        if self._should_pump(moisture):
+        if self.should_pump(moisture):
             # Loop until total water amount to be pumped is reached
             self._pump_event_in_progress = True
             
@@ -132,10 +124,25 @@ class PumpManager(object):
             
             self._pump_event_in_progress = False
             logger.info("==> Pump event complete, total amount pumped {} ml".format(accumulated_pump_amount))
+            self.low_water_notification() 
             
         return accumulated_pump_amount
 
-    def _should_pump(self, moisture):
+    
+    def low_water_notification(self):    
+        """
+        Read water level and check if a notification email should be sent
+        """
+        if (self._water_level_sensor.water_level() < WATER_LEVEL_THRESHOLD):
+            subject = "GreenPiThumb low water tank level"
+            body = "The water tank fill level has dropped below the set alert threshold of {0:0.1f} liters.\n\n".format(WATER_LEVEL_THRESHOLD) + \
+                   "The current fill level is {0:0.1f} liters.".format(self._water_level_sensor._last_reading)
+            logger.info("Low water tank level detected: {0:0.1f} liters (threshold={0:0.1f} liters), sending notification email".format(self._water_level_sensor._last_reading, WATER_LEVEL_THRESHOLD))
+            notifier = email_notification.EmailNotification(subject, body)
+            notifier.send()      
+
+
+    def should_pump(self, moisture):
         """Returns True if the pump should be run."""
         retVal = False
 
