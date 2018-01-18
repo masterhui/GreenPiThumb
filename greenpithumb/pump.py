@@ -20,7 +20,7 @@ WATER_LEVEL_THRESHOLD = 7.5
 class Pump(object):
     """Wrapper for a Seaflo 12V water pump."""
 
-    def __init__(self, pi_io, clock, pump_pin, water_level_sensor):
+    def __init__(self, pi_io, clock, pump_pin):
         """Creates a new Pump wrapper.
 
         Args:
@@ -31,7 +31,6 @@ class Pump(object):
         self._pi_io = pi_io
         self._clock = clock
         self._pump_pin = pump_pin
-        self._water_level_sensor = water_level_sensor
 
     def pump_water(self, amount_ml):
         """Pumps the specified amount of water.
@@ -63,8 +62,7 @@ class Pump(object):
 class PumpManager(object):
     """Pump Manager manages the water pump."""
 
-    def __init__(self, pump, pump_scheduler, moisture_threshold, total_pump_amount,
-                 timer):
+    def __init__(self, pump, pump_scheduler, moisture_threshold, total_pump_amount, timer, water_level_sensor):
         """Creates a PumpManager object, which manages a water pump.
 
         Args:
@@ -77,6 +75,7 @@ class PumpManager(object):
             timer: A timer that counts down until the next forced pump. When
                 this timer expires, the pump manager runs the pump once,
                 regardless of the moisture level.
+            water_level_sensor: Interface to the water level sensor.
         """
         self._pump = pump
         self._pump_scheduler = pump_scheduler
@@ -84,6 +83,7 @@ class PumpManager(object):
         self._total_pump_amount = total_pump_amount
         self._timer = timer
         self._pump_event_in_progress = False
+        self._water_level_sensor = water_level_sensor
         
     def pump_event_in_progress():
         return self._pump_event_in_progress

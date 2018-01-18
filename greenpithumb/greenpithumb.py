@@ -142,30 +142,25 @@ def make_pump_manager(moisture_threshold, sleep_windows, raspberry_pi_io,
         pump_amount: Amount (in mL) to pump on each run of the pump.
         db_connection: Database connection to use to retrieve pump history.
         pump_interval: Maximum amount of hours between pump runs.
-        water_level_sensor: Interface to the water level sensor
+        water_level_sensor: Interface to the water level sensor.
 
     Returns:
         A PumpManager instance with the given settings.
     """
-    water_pump = pump.Pump(raspberry_pi_io,
-                           clock.Clock(), wiring_config.gpio_pins.pump, water_level_sensor)
+    water_pump = pump.Pump(raspberry_pi_io, clock.Clock(), wiring_config.gpio_pins.pump)
     pump_scheduler = pump.PumpScheduler(clock.LocalClock(), sleep_windows)
     pump_timer = clock.Timer(clock.Clock(), pump_interval)
-    last_pump_time = pump_history.last_pump_time(
-        db_store.WateringEventStore(db_connection))
+    last_pump_time = pump_history.last_pump_time(db_store.WateringEventStore(db_connection))
     if last_pump_time:
         logger.info('last watering was at %s', last_pump_time)
-        time_remaining = max(
-            datetime.timedelta(seconds=0),
-            (last_pump_time + pump_interval) - clock.Clock().now())
+        time_remaining = max(datetime.timedelta(seconds=0), (last_pump_time + pump_interval) - clock.Clock().now())
     else:
         logger.info('no previous watering found')
         #~ time_remaining = datetime.timedelta(seconds=0)   # !!!WARNING!!! Immediately water plants if no previous watering event was found !!!WARNING!!!
         time_remaining = pump_interval                      # Schedule the first mandatory plant watering event in pump_interval hours
     logger.info('time until until next watering: %s', time_remaining)
     pump_timer.set_remaining(time_remaining)
-    return pump.PumpManager(water_pump, pump_scheduler, moisture_threshold,
-                            pump_amount, pump_timer)
+    return pump.PumpManager(water_pump, pump_scheduler, moisture_threshold, pump_amount, pump_timer, water_level_sensor)
 
 
 def make_sensor_pollers(poll_interval, photo_interval, record_queue,
