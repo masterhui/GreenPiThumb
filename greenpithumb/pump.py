@@ -124,6 +124,7 @@ class PumpManager(object):
             
             self._pump_event_in_progress = False
             logger.info("==> Pump event complete, total amount pumped {} ml".format(accumulated_pump_amount))
+            self._timer.reset()
             self.low_water_notification() 
             
         return accumulated_pump_amount

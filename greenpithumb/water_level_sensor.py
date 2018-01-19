@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 RESERVOIR_FULL =              3.0  # [cm]
-RESERVOIR_EMPTY =            38.0  # [cm]
+RESERVOIR_EMPTY =            36.0  # [cm]
 DISTANCE_CORRECTION_FACTOR =  3.0  # [cm]
 
 
@@ -74,6 +74,7 @@ class WaterLevelSensor(object):
             # object we take half of the distance travelled.
             # distance = duration / 29 / 2
             distance = (duration * 34000 / 2.0) - DISTANCE_CORRECTION_FACTOR
+            logger.info('distance reading = {0:0.1f} cm'.format(distance))
             
             if ( (distance > RESERVOIR_EMPTY * 1.1) or (distance < 0.0) ):
                 logger.error('invalid water level reading (distance=%d), discarding measurement', distance)
