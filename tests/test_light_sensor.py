@@ -1,25 +1,32 @@
-import unittest
+#!/usr/bin/env python
 
-import mock
+import argparse
+import time
 
-from greenpithumb import light_sensor
+import Adafruit_MCP3008
+
+# Software SPI configuration
+CLK  = 18
+MISO = 23
+MOSI = 24
+CS   = 25
 
 
-class LightSensorTest(unittest.TestCase):
+def main(args):
+  mcp = Adafruit_MCP3008.MCP3008(clk=CLK, cs=CS, miso=MISO, mosi=MOSI)
+  while True:
+      print 'Light reading=%d' % mcp.read_adc(args.channel)
+      time.sleep(0.5)
 
-    def setUp(self):
-        self.mock_adc = mock.Mock()
-        channel = 1
-        self.light_sensor = light_sensor.LightSensor(self.mock_adc, channel)
 
-    def test_light_50_pct(self):
-        """Near midpoint light sensor value should return near 50."""
-        self.mock_adc.read_adc.return_value = 511
-        self.assertAlmostEqual(self.light_sensor.light(), 50.0, places=1)
-
-    def test_ambient_light_too_low(self):
-        """Light sensor value less than min should raise a ValueError."""
-        with self.assertRaises(light_sensor.LightSensorLowError):
-            self.mock_adc.read_adc.return_value = (
-                light_sensor._LIGHT_SENSOR_MIN_VALUE - 1)
-            self.light_sensor.light()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='GreenPiThumb Light Sensor Diagnostic Test',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument(
+        '-c',
+        '--channel',
+        type=int,
+        help='ADC channel that light sensor is plugged in to',
+        default=0)
+    main(parser.parse_args())

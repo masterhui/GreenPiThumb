@@ -6,7 +6,7 @@ import Adafruit_DHT
 
 
 def main(args):
-    humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT11,
+    humidity, temperature = Adafruit_DHT.read_retry(Adafruit_DHT.DHT22,
                                                     args.dht_pin)
     if humidity is not None and temperature is not None:
         print(
@@ -17,7 +17,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        prog='GreenPiThumb DHT11 Diagnostic Test',
+        prog='GreenPiThumb DHT22 Diagnostic Test',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         '-p',

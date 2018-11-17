@@ -1,47 +1,57 @@
-import collections
-import unittest
+#!/usr/bin/env python
 
-import mock
+import argparse
+import time
 
-from greenpithumb import soil_moisture_sensor
+import Adafruit_MCP3008
+import RPi.GPIO as GPIO
+
+CLK  = 18
+MISO = 23
+MOSI = 24
+CS   = 25
 
 
-class MoistureSensorTest(unittest.TestCase):
+def main(args):
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(args.gpio_pin, GPIO.OUT)
 
-    def setUp(self):
-        self.mock_adc = mock.Mock()
-        self.pin_state = collections.defaultdict(lambda: False)
+    mcp = Adafruit_MCP3008.MCP3008(clk=CLK, cs=CS, miso=MISO, mosi=MOSI)
 
-        def mock_turn_pin_on(pin):
-            self.pin_state[pin] = True
+    try:
+        while True:
+            GPIO.output(args.gpio_pin, GPIO.HIGH)
+            moisture_raw = mcp.read_adc(args.channel)
+            #~ print 'Soil mositure level: %d' % reading
+            
+            # Measured sensor max and min value constants
+            Vair = 802.0
+            Vwet = 393.0            
+            
+            # Invert, calibrate sensor range and make the value a percentage
+            moisture_corrected = ((Vair - moisture_raw) / (Vair - Vwet)) * 100.0
+            print('soil moisture raw = {}'.format(moisture_raw))            
+            print('soil moisture corrected = {0:0.1f} %'.format(moisture_corrected))            
+            
+            GPIO.output(args.gpio_pin, GPIO.LOW)
+            time.sleep(0.5)
+    finally:
+        GPIO.cleanup()
 
-        def mock_turn_pin_off(pin):
-            self.pin_state[pin] = False
 
-        self.mock_pi_io = mock.Mock()
-        self.mock_pi_io.turn_pin_on.side_effect = mock_turn_pin_on
-        self.mock_pi_io.turn_pin_off.side_effect = mock_turn_pin_off
-
-    def test_moisture_read_succeeds_when_adc_succeeds(self):
-        self.mock_adc.read_adc.return_value = 350
-        channel = 1
-        gpio_pin = 12
-        sensor = soil_moisture_sensor.SoilMoistureSensor(
-            self.mock_adc, self.mock_pi_io, channel, gpio_pin)
-
-        self.assertEqual(350, sensor.soil_moisture())
-        self.mock_pi_io.turn_pin_on.assert_called_once_with(12)
-        self.mock_pi_io.turn_pin_off.assert_called_once_with(12)
-        self.assertFalse(self.pin_state[12])
-
-    def test_moisture_sensor_pins_turned_off_if_adc_raises_exception(self):
-        self.mock_adc.read_adc.side_effect = ValueError()
-        channel = 1
-        gpio_pin = 12
-        sensor = soil_moisture_sensor.SoilMoistureSensor(
-            self.mock_adc, self.mock_pi_io, channel, gpio_pin)
-
-        with self.assertRaises(ValueError):
-            sensor.soil_moisture()
-
-        self.assertFalse(self.pin_state[12])
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='GreenPiThumb Soil Moisture Diagnostic Test',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument(
+        '--gpio_pin',
+        type=int,
+        help='Pin to power moisture sensor',
+        default=16)
+    parser.add_argument(
+        '-c',
+        '--channel',
+        type=int,
+        help='ADC channel that moisture sensor is plugged in to',
+        default=7)
+    main(parser.parse_args())
