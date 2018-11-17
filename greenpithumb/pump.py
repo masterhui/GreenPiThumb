@@ -14,7 +14,7 @@ INTERVAL_PUMP_AMOUNT = 500   # In [ml]
 INTERVAL_DURATION = 60   # In [s]
 
 # Send email notification if water level drops below this value [l]
-WATER_LEVEL_THRESHOLD = 7.5
+WATER_LEVEL_THRESHOLD = 5.0
 
 
 class Pump(object):
@@ -105,22 +105,27 @@ class PumpManager(object):
             self._pump_event_in_progress = True
             
             while(True):
-                accumulated_pump_amount += INTERVAL_PUMP_AMOUNT
-                i += 1                 
-                logger.info("({}.) Pumping {} ml of water ({} ml of {} ml done)".format(i, INTERVAL_PUMP_AMOUNT, accumulated_pump_amount, self._total_pump_amount))
-                self._pump.pump_water(INTERVAL_PUMP_AMOUNT)
-                
-                # Check fail conditions
-                if(accumulated_pump_amount >= self._total_pump_amount):
-                    logger.info("Total pump amount reached, end pump task")
-                    break
+                # Safety check: Do not pump if water is present
                 if(drain_sensor.water_present()):
-                    logger.info("___Water detected by drain sensor, end pump task___")
-                    break                    
-                
-                logger.info("Sleep for {} s to allow water to drain and soak".format(INTERVAL_DURATION))
-                time.sleep(INTERVAL_DURATION)
-                logger.info("Continue water pump event...")             
+                    accumulated_pump_amount += INTERVAL_PUMP_AMOUNT
+                    i += 1                 
+                    logger.info("({}.) Pumping {} ml of water ({} ml of {} ml done)".format(i, INTERVAL_PUMP_AMOUNT, accumulated_pump_amount, self._total_pump_amount))
+                    self._pump.pump_water(INTERVAL_PUMP_AMOUNT)
+                    
+                    # Check fail conditions
+                    if(accumulated_pump_amount >= self._total_pump_amount):
+                        logger.info("Total pump amount reached, end pump task")
+                        break
+                    
+                    logger.info("Sleep for {} s to allow water to drain and soak".format(INTERVAL_DURATION))
+                    time.sleep(INTERVAL_DURATION)
+                    logger.info("Continue water pump event...")
+                else:
+                    if(accumulated_pump_amount > 0):
+                        logger.info("Water detected by drain sensor, END PUMP TASK")
+                    else:
+                        logger.warn("Water detected by drain sensor, cancel pump task")
+                    break
             
             self._pump_event_in_progress = False
             logger.info("==> Pump event complete, total amount pumped {} ml".format(accumulated_pump_amount))
