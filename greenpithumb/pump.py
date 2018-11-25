@@ -100,13 +100,14 @@ class PumpManager(object):
         """
         accumulated_pump_amount = 0
         i = 0
+        pump_one_more_time = False
         if self.should_pump(moisture):
             # Loop until total water amount to be pumped is reached
             self._pump_event_in_progress = True
             
             while(True):
                 # Safety check: Do not pump if water is present
-                if(drain_sensor.water_present()):
+                if(not drain_sensor.water_present() or pump_one_more_time):
                     accumulated_pump_amount += INTERVAL_PUMP_AMOUNT
                     i += 1                 
                     logger.info("({}.) Pumping {} ml of water ({} ml of {} ml done)".format(i, INTERVAL_PUMP_AMOUNT, accumulated_pump_amount, self._total_pump_amount))
@@ -122,10 +123,15 @@ class PumpManager(object):
                     logger.info("Continue water pump event...")
                 else:
                     if(accumulated_pump_amount > 0):
-                        logger.info("Water detected by drain sensor, END PUMP TASK")
+                        if(pump_one_more_time == False):
+                            logger.info("Water detected by drain sensor for the 1st time during pump task, will pump one more time")
+                            pump_one_more_time = True
+                        else:
+                            logger.info("Water detected by drain sensor for the 2nd time during pump task, END TASK")
+                            break                            
                     else:
-                        logger.warn("Water detected by drain sensor, cancel pump task")
-                    break
+                        logger.warn("Water detected by drain sensor at the beginning of a pump task, CANCEL TASK")
+                        break
             
             self._pump_event_in_progress = False
             logger.info("==> Pump event complete, total amount pumped {} ml".format(accumulated_pump_amount))
