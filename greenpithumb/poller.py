@@ -16,9 +16,12 @@ _IDLE_SECONDS = 0.5
 
 # Wait some time so that the time sensitive sensor reading do 
 # not take place with the other sensor readings.
-TEMPERATURE_POLL_DELAY =  5.0
-HUMIDITY_POLL_DELAY    = 10.0
-WATER_LEVEL_POLL_DELAY = 15.0
+CAMERA_POLL_DELAY        =  0.0
+TEMPERATURE_POLL_DELAY   =  5.0
+HUMIDITY_POLL_DELAY      = 10.0
+WATER_LEVEL_POLL_DELAY   = 15.0
+LIGHT_POLL_DELAY         = 20.0
+SOIL_WATERING_POLL_DELAY = 25.0
 
 
 class SensorPollerFactory(object):
@@ -232,6 +235,7 @@ class _LightPollWorker(_SensorPollWorkerBase):
     """Polls a light sensor and stores the readings."""
 
     def _poll_once(self):
+        time.sleep(LIGHT_POLL_DELAY)   # Apply poll delay
         light = self._sensor.light()
         self._record_queue.put(
             db_store.LightRecord(self._scheduler.last_poll_time(), light))
@@ -269,6 +273,7 @@ class _SoilWateringPollWorker(_SensorPollWorkerBase):
         current soil moisture level, checks if the pump needs to run, and if so,
         runs the pump and records the watering event.
         """
+        time.sleep(SOIL_WATERING_POLL_DELAY)   # Apply poll delay
         soil_moisture = self._sensor.soil_moisture()
         water_present = self._drain_sensor.water_present()
         self._record_queue.put(db_store.SoilMoistureRecord(self._scheduler.last_poll_time(), soil_moisture, water_present))        
