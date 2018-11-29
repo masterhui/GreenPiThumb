@@ -110,12 +110,17 @@ class PumpManager(object):
                 if(not drain_sensor.water_present() or pump_one_more_time):
                     accumulated_pump_amount += INTERVAL_PUMP_AMOUNT
                     i += 1                 
-                    logger.info("({}.) Pumping {} ml of water ({} ml of {} ml done)".format(i, INTERVAL_PUMP_AMOUNT, accumulated_pump_amount, self._total_pump_amount))
+                    logger.info("({}.) Pumping {} ml of water ({} ml of {} ml)".format(i, INTERVAL_PUMP_AMOUNT, accumulated_pump_amount, self._total_pump_amount))
+                    
+                    # Turn pump on
                     self._pump.pump_water(INTERVAL_PUMP_AMOUNT)
                     
                     # Check fail conditions
                     if(accumulated_pump_amount >= self._total_pump_amount):
-                        logger.info("Total pump amount reached, end pump task")
+                        logger.info("Total pump amount reached, END TASK")
+                        break
+                    if pump_one_more_time:
+                        logger.info("Pumped for one more time, END TASK")
                         break
                     
                     logger.info("Sleep for {} s to allow water to drain and soak".format(INTERVAL_DURATION))
@@ -123,12 +128,8 @@ class PumpManager(object):
                     logger.info("Continue water pump event...")
                 else:
                     if(accumulated_pump_amount > 0):
-                        if(pump_one_more_time == False):
-                            logger.info("Water detected by drain sensor for the 1st time during pump task, will pump one more time")
-                            pump_one_more_time = True
-                        else:
-                            logger.info("Water detected by drain sensor for the 2nd time during pump task, END TASK")
-                            break                            
+                        logger.info("Water detected by drain sensor during pump task, will pump ONE MORE TIME")
+                        pump_one_more_time = True          
                     else:
                         logger.warn("Water detected by drain sensor at the beginning of a pump task, CANCEL TASK")
                         break
