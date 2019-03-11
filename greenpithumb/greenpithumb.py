@@ -308,7 +308,7 @@ if __name__ == '__main__':
         '--pump_interval',
         type=float,
         help='Max number of hours between plant waterings',
-        default=(7 * 24))
+        default=(365 * 24))
     parser.add_argument(
         '-c',
         '--config_file',

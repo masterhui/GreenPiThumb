@@ -65,6 +65,9 @@ CREATE TABLE watering_events
 # of YYYY-MM-DDTHH:MMZ.
 _TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%MZ'
 
+# Delete records older than this value
+DELETE_THRESHOLD = 7   # [days]
+
 
 def _timestamp_to_utc(timestamp):
     return timestamp.replace(tzinfo=timestamp.tzinfo).astimezone(pytz.utc)
@@ -127,6 +130,7 @@ class _DbStoreBase(object):
         self._connection = connection
         self._cursor = connection.cursor()
 
+
     def _do_insert(self, sql, timestamp, value1, value2=None):
         """Executes and commits a SQL insert command.
 
@@ -147,6 +151,24 @@ class _DbStoreBase(object):
             self._cursor.execute(sql, (timestamp_utc.strftime(_TIMESTAMP_FORMAT), value1))
         
         self._connection.commit()
+
+
+    def _do_delete_old_data(self, sql):
+        """Executes and commits a SQL delete command.
+
+        Args:
+          sql: SQL query string for the delete command.
+        """
+        #~ logger.info("[do_delete_old_data] Execute sql={}".format(sql))
+        try:
+            self._cursor.execute(sql)        
+            self._connection.commit()
+            #~ logger.info("[do_delete_old_data] Deleted older data from database")
+
+        except:
+            self._connection.rollback()
+            logger.error("[do_delete_old_data] Cannot delete older data from database")
+
 
     def _do_get(self, sql, record_type, is_soil_moisture_record=None):
         """Executes a SQL select query and returns the results.
@@ -188,6 +210,7 @@ class SoilMoistureStore(_DbStoreBase):
                         soil_moisture_record.timestamp,
                         soil_moisture_record.soil_moisture,
                         soil_moisture_record.water_present)
+        self._do_delete_old_data("DELETE FROM soil_moisture WHERE timestamp <= date('now','-{} day')".format(DELETE_THRESHOLD))        
 
     def get(self):
         """Retrieves timestamp, soil moisture and water present readings.
@@ -209,6 +232,7 @@ class LightStore(_DbStoreBase):
         """
         self._do_insert('INSERT INTO light VALUES (?, ?)',
                         light_record.timestamp, light_record.light)
+        self._do_delete_old_data("DELETE FROM light WHERE timestamp <= date('now','-{} day')".format(DELETE_THRESHOLD))
 
     def get(self):
         """Retrieves timestamp and light readings.
@@ -230,6 +254,7 @@ class HumidityStore(_DbStoreBase):
         """
         self._do_insert('INSERT INTO humidity VALUES (?, ?)',
                         humidity_record.timestamp, humidity_record.humidity)
+        self._do_delete_old_data("DELETE FROM humidity WHERE timestamp <= date('now','-{} day')".format(DELETE_THRESHOLD))
 
     def get(self):
         """Retrieves timestamp and relative humidity readings.
@@ -252,6 +277,7 @@ class TemperatureStore(_DbStoreBase):
         self._do_insert('INSERT INTO temperature VALUES (?, ?)',
                         temperature_record.timestamp,
                         temperature_record.temperature)
+        self._do_delete_old_data("DELETE FROM temperature WHERE timestamp <= date('now','-{} day')".format(DELETE_THRESHOLD))
 
     def get(self):
         """Retrieves timestamp and temperature(C) readings.
@@ -273,6 +299,7 @@ class WaterLevelStore(_DbStoreBase):
         self._do_insert('INSERT INTO water_level VALUES (?, ?)',
                         water_level_record.timestamp,
                         water_level_record.water_level)
+        self._do_delete_old_data("DELETE FROM water_level WHERE timestamp <= date('now','-{} day')".format(DELETE_THRESHOLD))
 
     def get(self):
         """Retrieves timestamp and water level [cm] readings.
@@ -295,6 +322,7 @@ class WateringEventStore(_DbStoreBase):
         self._do_insert('INSERT INTO watering_events VALUES (?, ?)',
                         watering_event_record.timestamp,
                         watering_event_record.water_pumped)
+        self._do_delete_old_data("DELETE FROM watering_events WHERE timestamp <= date('now','-{} day')".format(DELETE_THRESHOLD))
 
     def get(self):
         """Retrieves timestamp and volume of water pumped(in mL).
