@@ -66,7 +66,7 @@ CREATE TABLE watering_events
 _TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%MZ'
 
 # Delete records older than this value
-DELETE_THRESHOLD = 7   # [days]
+DELETE_THRESHOLD = 10   # [days]
 
 
 def _timestamp_to_utc(timestamp):
