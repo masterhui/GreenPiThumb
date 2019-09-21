@@ -13,6 +13,8 @@ _FILENAME_FORMAT_REDUCED_RES = 'reduced_%Y-%m-%dT%H%MZ.jpg'
 LIGHT_THRESHOLD_PCT = 20
 # Camera rotation defined as [0,1,2,3 ~ 0,90,180,270 degrees]
 CAMERA_ROTATION = 0
+# Number of days for animation
+TIMELAPSE_NUM_DAYS = 24
 
 class CameraManager(object):
     """Captures and saves photos to the filesystem."""
@@ -71,7 +73,34 @@ class CameraManager(object):
 
     def create_timelapse(self):
         logger.info('create timelapse in directory %s', self._image_path)
-        #~ TODO: Insert code here
+        jpg_count = len(glob.glob1(self._image_path,"reduced_*.jpg"))
+
+        # Create sequential symlinks
+        logger.info("create sequentially numbered symlinks of most recent %d images", TIMELAPSE_NUM_DAYS)
+        i = 0
+        seq = 0
+        for filename in sorted(os.listdir(self._image_path)):
+            if filename.startswith("reduced_"):        
+                if i >= jpg_count - TIMELAPSE_NUM_DAYS:
+                    src = self._image_path + "/" + filename
+                    dst = self._image_path + "/" + str(seq) + ".jpg"
+                    seq += 1
+                    #~ logger.info("Create symlink %s %s", src, dst)
+                    try:
+                        os.symlink(src, dst)
+                    except OSError:
+                        pass
+                i += 1
+
+        # Create timlapse animation
+        #~ command = 'gst-launch-1.0 multifilesrc location=%d.jpg index=1 caps="image/jpeg,framerate=4/1" ! jpegdec ! omxh264enc target-bitrate=6400000 control-rate=variable ! avimux ! filesink location=timelapse.avi'
+        command = 'gst-launch-1.0 multifilesrc location=%d.jpg index=1 caps="image/jpeg,framerate=4/1" ! jpegdec ! videoconvert ! videorate ! theoraenc ! oggmux ! filesink location=timelapse.ogg'
+        logger.info("create timlapse animation by calling %s", command)
+        os.chdir(self._image_path)
+        os.system(command)
+        logger.info("timelapse creation DONE")
+        # Delete symlinks
+        os.system("find -type l -delete")
         
 
     def close(self):
