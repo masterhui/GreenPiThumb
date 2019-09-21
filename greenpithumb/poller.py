@@ -290,6 +290,7 @@ class _CameraPollWorker(_SensorPollWorkerBase):
         if self._sensor.sufficient_light():
             self._sensor.save_photo_full_res()
             self._sensor.save_photo_reduced_res()
+            self._sensor.create_timelapse()
 
     def stop(self):
         """End worker polling and close camera."""

@@ -1,6 +1,7 @@
 import logging
 import os
 import picamera
+import glob
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ _FILENAME_FORMAT_REDUCED_RES = 'reduced_%Y-%m-%dT%H%MZ.jpg'
 # Light level below which camera will not capture photos.
 LIGHT_THRESHOLD_PCT = 20
 # Camera rotation defined as [0,1,2,3 ~ 0,90,180,270 degrees]
-CAMERA_ROTATION = 0   
+CAMERA_ROTATION = 0
 
 class CameraManager(object):
     """Captures and saves photos to the filesystem."""
@@ -52,7 +53,7 @@ class CameraManager(object):
         path = os.path.join(self._image_path, self._clock.now().strftime(_FILENAME_FORMAT_FULL_RES))        
         self._camera.capture(path)
         
-        logger.info('saved new reduced resolution photo to %s', path)  
+        logger.info('saved new full resolution photo to %s', path)  
         
         
     def save_photo_reduced_res(self):
@@ -65,7 +66,12 @@ class CameraManager(object):
         path = os.path.join(self._image_path, self._clock.now().strftime(_FILENAME_FORMAT_REDUCED_RES))        
         self._camera.capture(path, resize=(640, 480))   # Use resize() to capture reduced size images
         
-        logger.info('saved new reduced resolution photo to %s', path)        
+        logger.info('saved new reduced resolution photo to %s', path)     
+
+
+    def create_timelapse(self):
+        logger.info('create timelapse in directory %s', self._image_path)
+        #~ TODO: Insert code here
         
 
     def close(self):
