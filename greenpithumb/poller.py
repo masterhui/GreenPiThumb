@@ -16,13 +16,12 @@ _IDLE_SECONDS = 0.5
 
 # Wait some time so that the time sensitive sensor reading do 
 # not take place with the other sensor readings.
-CAMERA_POLL_DELAY        =  0.0
-TEMPERATURE_POLL_DELAY   =  5.0
-HUMIDITY_POLL_DELAY      = 10.0
-WATER_LEVEL_POLL_DELAY   = 15.0
-LIGHT_POLL_DELAY         = 20.0
-SOIL_WATERING_POLL_DELAY = 25.0
-
+TEMPERATURE_POLL_DELAY   =  0.0
+HUMIDITY_POLL_DELAY      =  5.0
+WATER_LEVEL_POLL_DELAY   = 10.0
+LIGHT_POLL_DELAY         = 15.0
+SOIL_WATERING_POLL_DELAY = 20.0
+CAMERA_POLL_DELAY        = 25.0
 
 class SensorPollerFactory(object):
     """Factory for creating sensor poller objects."""
@@ -287,6 +286,7 @@ class _CameraPollWorker(_SensorPollWorkerBase):
 
     def _poll_once(self):
         """Captures and stores an image."""
+        time.sleep(CAMERA_POLL_DELAY)   # Apply poll delay
         if self._sensor.sufficient_light():
             self._sensor.save_photo_full_res()
             self._sensor.save_photo_reduced_res()

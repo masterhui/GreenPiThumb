@@ -14,7 +14,7 @@ LIGHT_THRESHOLD_PCT = 20
 # Camera rotation defined as [0,1,2,3 ~ 0,90,180,270 degrees]
 CAMERA_ROTATION = 0
 # Number of days for animation
-TIMELAPSE_NUM_DAYS = 24
+TIMELAPSE_NUM_DAYS = 48
 
 class CameraManager(object):
     """Captures and saves photos to the filesystem."""
@@ -93,8 +93,8 @@ class CameraManager(object):
                 i += 1
 
         # Create timlapse animation
-        #~ command = 'gst-launch-1.0 multifilesrc location=%d.jpg index=1 caps="image/jpeg,framerate=4/1" ! jpegdec ! omxh264enc target-bitrate=6400000 control-rate=variable ! avimux ! filesink location=timelapse.avi'
-        command = 'gst-launch-1.0 multifilesrc location=%d.jpg index=1 caps="image/jpeg,framerate=4/1" ! jpegdec ! videoconvert ! videorate ! theoraenc ! oggmux ! filesink location=timelapse.ogg'
+        #~ command = 'gst-launch-1.0 multifilesrc location=%d.jpg index=1 caps="image/jpeg,framerate=\(fraction\)4/1" ! jpegdec ! omxh264enc target-bitrate=6400000 control-rate=variable ! avimux ! filesink location=timelapse.avi'
+        command = 'gst-launch-1.0 multifilesrc location=%d.jpg index=1 caps="image/jpeg,framerate=\(fraction\)6/1" ! jpegdec ! videoconvert ! videorate ! theoraenc ! oggmux ! filesink location=timelapse.ogg'
         logger.info("create timlapse animation by calling %s", command)
         os.chdir(self._image_path)
         os.system(command)

@@ -3,7 +3,7 @@ import os
 
 
 IMAGE_PATH = "/opt/greenpithumb-data/images/"
-TIMELAPSE_NUM_DAYS = 24
+TIMELAPSE_NUM_DAYS = 48
 
 jpg_count = len(glob.glob1(IMAGE_PATH,"reduced_*.jpg"))
 #~ print "jpg_count =", jpg_count
@@ -25,8 +25,8 @@ for filename in sorted(os.listdir(IMAGE_PATH)):
                 pass
         i += 1
 
-#~ command = 'gst-launch-1.0 multifilesrc location=%d.jpg index=1 caps="image/jpeg,framerate=4/1" ! jpegdec ! omxh264enc target-bitrate=6400000 control-rate=variable ! avimux ! filesink location=timelapse.avi'
-command = 'gst-launch-1.0 multifilesrc location=%d.jpg index=1 caps="image/jpeg,framerate=4/1" ! jpegdec ! videoconvert ! videorate ! theoraenc ! oggmux ! filesink location=timelapse.ogg'
+#~ command = 'gst-launch-1.0 multifilesrc location=%d.jpg index=1 caps="image/jpeg,framerate=\(fraction\)4/1" ! jpegdec ! omxh264enc target-bitrate=6400000 control-rate=variable ! avimux ! filesink location=timelapse.avi'
+command = 'gst-launch-1.0 multifilesrc location=%d.jpg index=1 caps="image/jpeg,framerate=\(fraction\)6/1" ! jpegdec ! videoconvert ! videorate ! theoraenc ! oggmux ! filesink location=timelapse.ogg'
 
 print "Create timlapse animation by calling", command
 os.chdir(IMAGE_PATH)
