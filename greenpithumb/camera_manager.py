@@ -13,8 +13,8 @@ _FILENAME_FORMAT_REDUCED_RES = 'reduced_%Y-%m-%dT%H%MZ.jpg'
 LIGHT_THRESHOLD_PCT = 20
 # Camera rotation defined as [0,1,2,3 ~ 0,90,180,270 degrees]
 CAMERA_ROTATION = 0
-# Number of days for animation
-TIMELAPSE_NUM_DAYS = 48
+# Number of images for animation
+TIMELAPSE_NUM_IMAGES = 48
 
 class CameraManager(object):
     """Captures and saves photos to the filesystem."""
@@ -76,12 +76,12 @@ class CameraManager(object):
         jpg_count = len(glob.glob1(self._image_path,"reduced_*.jpg"))
 
         # Create sequential symlinks
-        logger.info("create sequentially numbered symlinks of most recent %d images", TIMELAPSE_NUM_DAYS)
+        logger.info("create sequentially numbered symlinks of most recent %d images", TIMELAPSE_NUM_IMAGES)
         i = 0
         seq = 0
         for filename in sorted(os.listdir(self._image_path)):
             if filename.startswith("reduced_"):        
-                if i >= jpg_count - TIMELAPSE_NUM_DAYS:
+                if i >= jpg_count - TIMELAPSE_NUM_IMAGES:
                     src = self._image_path + "/" + filename
                     dst = self._image_path + "/" + str(seq) + ".jpg"
                     seq += 1
