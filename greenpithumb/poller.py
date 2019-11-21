@@ -26,7 +26,7 @@ CAMERA_POLL_DELAY        = 25.0
 class SensorPollerFactory(object):
     """Factory for creating sensor poller objects."""
 
-    def __init__(self, make_scheduler_func, record_queue):
+    def __init__(self, make_scheduler_func, record_queue, mqtt_client):
         """Create a new SensorPollerFactory instance.
 
         Args:
@@ -35,35 +35,36 @@ class SensorPollerFactory(object):
         """
         self._make_scheduler_func = make_scheduler_func
         self._record_queue = record_queue
+        self._mqtt_client = mqtt_client
 
     def create_temperature_poller(self, temperature_sensor):
         return _SensorPoller(
             _TemperaturePollWorker(self._make_scheduler_func(),
-                                   self._record_queue, temperature_sensor))
+                                   self._record_queue, self._mqtt_client, temperature_sensor))
 
     def create_humidity_poller(self, humidity_sensor):
         return _SensorPoller(
-            _HumidityPollWorker(self._make_scheduler_func(), self._record_queue,
+            _HumidityPollWorker(self._make_scheduler_func(), self._record_queue, self._mqtt_client,
                                 humidity_sensor))
                                 
     def create_water_level_poller(self, water_level_sensor):
         return _SensorPoller(
-            _WaterLevelPollWorker(self._make_scheduler_func(), self._record_queue,
+            _WaterLevelPollWorker(self._make_scheduler_func(), self._record_queue, self._mqtt_client,
                                 water_level_sensor))                                
 
     def create_light_poller(self, light_sensor):
         return _SensorPoller(
-            _LightPollWorker(self._make_scheduler_func(), self._record_queue,
+            _LightPollWorker(self._make_scheduler_func(), self._record_queue, self._mqtt_client,
                              light_sensor))
 
     def create_soil_watering_poller(self, soil_moisture_sensor, drain_sensor, pump_manager):
         return _SensorPoller(
             _SoilWateringPollWorker(self._make_scheduler_func(
-            ), self._record_queue, soil_moisture_sensor, drain_sensor, pump_manager))
+            ), self._record_queue, self._mqtt_client, soil_moisture_sensor, drain_sensor, pump_manager))
 
     def create_camera_poller(self, camera_manager):
         return _SensorPoller(
-            _CameraPollWorker(self._make_scheduler_func(), self._record_queue,
+            _CameraPollWorker(self._make_scheduler_func(), self._record_queue, self._mqtt_client,
                               camera_manager))
 
 
@@ -158,7 +159,7 @@ class _SensorPollWorkerBase(object):
     background polling thread.
     """
 
-    def __init__(self, scheduler, record_queue, sensor):
+    def __init__(self, scheduler, record_queue, mqtt_client, sensor):
         """Create a new _SensorPollWorkerBase instance
 
         Args:
@@ -169,7 +170,8 @@ class _SensorPollWorkerBase(object):
         """
         self._scheduler = scheduler
         self._record_queue = record_queue
-        self._sensor = sensor
+        self._mqtt_client = mqtt_client
+        self._sensor = sensor        
         self._stopped = threading.Event()
 
     def _is_stopped(self):
@@ -202,9 +204,9 @@ class _TemperaturePollWorker(_SensorPollWorkerBase):
         """Polls for current temperature and queues DB record."""
         time.sleep(TEMPERATURE_POLL_DELAY)   # Apply poll delay
         temperature = self._sensor.temperature()
-        self._record_queue.put(
-            db_store.TemperatureRecord(self._scheduler.last_poll_time(),
-                                       temperature))
+        self._record_queue.put(db_store.TemperatureRecord(self._scheduler.last_poll_time(), temperature))
+        temperature_str = "%.2f" % temperature
+        self._mqtt_client.publish("greenpi/temperature", temperature_str)
 
 
 class _HumidityPollWorker(_SensorPollWorkerBase):
@@ -214,8 +216,9 @@ class _HumidityPollWorker(_SensorPollWorkerBase):
         """Polls for and stores current relative humidity."""
         time.sleep(HUMIDITY_POLL_DELAY)   # Apply poll delay
         humidity = self._sensor.humidity()
-        self._record_queue.put(
-            db_store.HumidityRecord(self._scheduler.last_poll_time(), humidity))
+        self._record_queue.put(db_store.HumidityRecord(self._scheduler.last_poll_time(), humidity))
+        humidity_str = "%.2f" % humidity
+        self._mqtt_client.publish("greenpi/humidity", humidity_str)
             
             
 class _WaterLevelPollWorker(_SensorPollWorkerBase):
@@ -226,8 +229,9 @@ class _WaterLevelPollWorker(_SensorPollWorkerBase):
         time.sleep(WATER_LEVEL_POLL_DELAY)   # Apply poll delay
         water_level = self._sensor.water_level()
         if(water_level >= 0.0):
-            self._record_queue.put(
-                db_store.WaterLevelRecord(self._scheduler.last_poll_time(), water_level))            
+            self._record_queue.put(db_store.WaterLevelRecord(self._scheduler.last_poll_time(), water_level))
+            water_level_str = "%.2f" % water_level
+            self._mqtt_client.publish("greenpi/water_level", water_level_str)
 
 
 class _LightPollWorker(_SensorPollWorkerBase):
@@ -236,8 +240,9 @@ class _LightPollWorker(_SensorPollWorkerBase):
     def _poll_once(self):
         time.sleep(LIGHT_POLL_DELAY)   # Apply poll delay
         light = self._sensor.light()
-        self._record_queue.put(
-            db_store.LightRecord(self._scheduler.last_poll_time(), light))
+        self._record_queue.put(db_store.LightRecord(self._scheduler.last_poll_time(), light))
+        light_str = "%.2f" % light
+        self._mqtt_client.publish("greenpi/light", light_str)
 
 
 class _SoilWateringPollWorker(_SensorPollWorkerBase):
@@ -247,7 +252,7 @@ class _SoilWateringPollWorker(_SensorPollWorkerBase):
     the moisture drops too low. Records both soil moisture and watering events.
     """
 
-    def __init__(self, scheduler, record_queue, soil_moisture_sensor, drain_sensor, 
+    def __init__(self, scheduler, record_queue, mqtt_client, soil_moisture_sensor, drain_sensor, 
                  pump_manager):
         """Creates a new SoilWateringPoller object.
 
@@ -260,7 +265,7 @@ class _SoilWateringPollWorker(_SensorPollWorkerBase):
             drain_sensor: An interface for reading the drain sensor.
             pump_manager: An interface to manage a water pump.
         """
-        super(_SoilWateringPollWorker, self).__init__(scheduler, record_queue,
+        super(_SoilWateringPollWorker, self).__init__(scheduler, record_queue, mqtt_client,
                                                       soil_moisture_sensor)
         self._drain_sensor = drain_sensor
         self._pump_manager = pump_manager
@@ -279,6 +284,7 @@ class _SoilWateringPollWorker(_SensorPollWorkerBase):
         ml_pumped = self._pump_manager.pump_if_needed(soil_moisture, self._drain_sensor)
         if ml_pumped > 0:
             self._record_queue.put(db_store.WateringEventRecord(self._scheduler.last_poll_time(), ml_pumped))
+            self._mqtt_client.publish("greenpi/ml_pumped", ml_pumped)
 
 
 class _CameraPollWorker(_SensorPollWorkerBase):
@@ -291,6 +297,7 @@ class _CameraPollWorker(_SensorPollWorkerBase):
             self._sensor.save_photo_full_res()
             self._sensor.save_photo_reduced_res()
             self._sensor.create_timelapse()
+            self._mqtt_client.publish("greenpi/image_taken", "TRIGGER")
 
     def stop(self):
         """End worker polling and close camera."""

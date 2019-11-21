@@ -116,7 +116,6 @@ def make_light_sensor(adc, wiring_config):
 def make_mqtt_client(mqtt_broker):
     return mqtt_client.MqttClient(mqtt_broker)
 
-
 def make_camera_manager(rotation, image_path, light_sensor):
     """Creates a camera manager instance.
 
@@ -167,7 +166,7 @@ def make_pump_manager(moisture_threshold, sleep_windows, raspberry_pi_io,
     return pump.PumpManager(water_pump, pump_scheduler, moisture_threshold, pump_amount, pump_timer, water_level_sensor)
 
 
-def make_sensor_pollers(poll_interval, photo_interval, record_queue,
+def make_sensor_pollers(poll_interval, photo_interval, record_queue, mqtt_client,
                         temperature_sensor, humidity_sensor, water_level_sensor,
                         soil_moisture_sensor, drain_sensor, light_sensor, camera_manager,
                         pump_manager):
@@ -177,6 +176,7 @@ def make_sensor_pollers(poll_interval, photo_interval, record_queue,
         poll_interval: The frequency at which to poll non-camera sensors.
         photo_interval: The frequency at which to capture photos.
         record_queue: Queue on which to put sensor reading records.
+        mqtt_client: The mqtt client for sending updates to openhab
         temperature_sensor: Sensor for measuring temperature.
         humidity_sensor: Sensor for measuring humidity.
         water_level_sensor: Sensor for measuring the reservoir water level.
@@ -195,10 +195,9 @@ def make_sensor_pollers(poll_interval, photo_interval, record_queue,
 
     make_scheduler_func = lambda: poller.Scheduler(utc_clock, poll_interval)
     photo_make_scheduler_func = lambda: poller.Scheduler(utc_clock, photo_interval)
-    poller_factory = poller.SensorPollerFactory(make_scheduler_func,
-                                                record_queue)
+    poller_factory = poller.SensorPollerFactory(make_scheduler_func, record_queue, mqtt_client)
     camera_poller_factory = poller.SensorPollerFactory(
-        photo_make_scheduler_func, record_queue=None)
+        photo_make_scheduler_func, record_queue=None, mqtt_client=None)
 
     return [
         poller_factory.create_temperature_poller(temperature_sensor),
@@ -264,6 +263,7 @@ def main(args):
             datetime.timedelta(minutes=args.poll_interval),
             datetime.timedelta(minutes=args.photo_interval),
             record_queue,
+            mqtt_client,
             local_temperature_sensor,
             local_humidity_sensor,
             local_water_level_sensor,

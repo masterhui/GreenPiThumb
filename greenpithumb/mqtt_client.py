@@ -34,9 +34,13 @@ class MqttClient(object):
     def on_connect(self, client, userdata, flags, rc):
         logger.info('Connected to mqtt borker %s', self._mqtt_broker)
         self._mqtt_client.subscribe(MQTT_TOPIC)
-        logger.info('Subscribed to topic %s', MQTT_TOPIC)
+        logger.info('Subscribed to mqtt topic %s', MQTT_TOPIC)
 
 
     def on_message(self, client, userdata, msg):
         logger.info('Received mqtt message: %s', msg.payload)
+        
+    def publish(self, topic, payload):
+        logger.info('Publish %s: %s', topic, payload)
+        self._mqtt_client.publish(topic, payload)
         
