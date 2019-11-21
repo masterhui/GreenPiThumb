@@ -29,6 +29,7 @@ import drain_sensor
 import water_level_sensor
 import temperature_sensor
 import wiring_config_parser
+import mqtt_client
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,9 @@ def make_drain_sensor(adc, raspberry_pi_io, wiring_config):
 def make_light_sensor(adc, wiring_config):
     return light_sensor.LightSensor(adc,
                                     wiring_config.adc_channels.light_sensor)
+                                    
+def make_mqtt_client(mqtt_broker):
+    return mqtt_client.MqttClient(mqtt_broker)
 
 
 def make_camera_manager(rotation, image_path, light_sensor):
@@ -242,6 +246,7 @@ def main(args):
     local_light_sensor = make_light_sensor(adc, wiring_config)
     camera_manager = make_camera_manager(args.camera_rotation, args.image_path,
                                          local_light_sensor)
+    mqtt_client = make_mqtt_client(args.mqtt_broker)
 
     with contextlib.closing(
             db_store.open_or_create_db(args.db_file)) as db_connection:
@@ -346,6 +351,11 @@ if __name__ == '__main__':
         type=int,
         choices=(0, 90, 180, 270),
         help='Specifies the amount to rotate the camera\'s image.')
+    parser.add_argument(
+        '--mqtt_broker',
+        type=str,
+        default=[],
+        help='Specifies IP address of the mqtt broker.')
     parser.add_argument(
         '-v', '--verbose', action='store_true', help='Use verbose logging')
     main(parser.parse_args())
