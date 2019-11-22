@@ -197,7 +197,7 @@ def make_sensor_pollers(poll_interval, photo_interval, record_queue, mqtt_client
     photo_make_scheduler_func = lambda: poller.Scheduler(utc_clock, photo_interval)
     poller_factory = poller.SensorPollerFactory(make_scheduler_func, record_queue, mqtt_client)
     camera_poller_factory = poller.SensorPollerFactory(
-        photo_make_scheduler_func, record_queue=None, mqtt_client=None)
+        photo_make_scheduler_func, record_queue, mqtt_client)
 
     return [
         poller_factory.create_temperature_poller(temperature_sensor),

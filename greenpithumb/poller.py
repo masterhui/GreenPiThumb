@@ -205,8 +205,7 @@ class _TemperaturePollWorker(_SensorPollWorkerBase):
         time.sleep(TEMPERATURE_POLL_DELAY)   # Apply poll delay
         temperature = self._sensor.temperature()
         self._record_queue.put(db_store.TemperatureRecord(self._scheduler.last_poll_time(), temperature))
-        temperature_str = "%.2f" % temperature
-        self._mqtt_client.publish("greenpi/temperature", temperature_str)
+        self._mqtt_client.publish("greenpi/temperature", temperature)
 
 
 class _HumidityPollWorker(_SensorPollWorkerBase):
@@ -217,8 +216,7 @@ class _HumidityPollWorker(_SensorPollWorkerBase):
         time.sleep(HUMIDITY_POLL_DELAY)   # Apply poll delay
         humidity = self._sensor.humidity()
         self._record_queue.put(db_store.HumidityRecord(self._scheduler.last_poll_time(), humidity))
-        humidity_str = "%.2f" % humidity
-        self._mqtt_client.publish("greenpi/humidity", humidity_str)
+        self._mqtt_client.publish("greenpi/humidity", humidity)
             
             
 class _WaterLevelPollWorker(_SensorPollWorkerBase):
@@ -229,9 +227,8 @@ class _WaterLevelPollWorker(_SensorPollWorkerBase):
         time.sleep(WATER_LEVEL_POLL_DELAY)   # Apply poll delay
         water_level = self._sensor.water_level()
         if(water_level >= 0.0):
-            self._record_queue.put(db_store.WaterLevelRecord(self._scheduler.last_poll_time(), water_level))
-            water_level_str = "%.2f" % water_level
-            self._mqtt_client.publish("greenpi/water_level", water_level_str)
+            self._record_queue.put(db_store.WaterLevelRecord(self._scheduler.last_poll_time(), water_level))            
+            self._mqtt_client.publish("greenpi/water_level", water_level)
 
 
 class _LightPollWorker(_SensorPollWorkerBase):
@@ -241,8 +238,7 @@ class _LightPollWorker(_SensorPollWorkerBase):
         time.sleep(LIGHT_POLL_DELAY)   # Apply poll delay
         light = self._sensor.light()
         self._record_queue.put(db_store.LightRecord(self._scheduler.last_poll_time(), light))
-        light_str = "%.2f" % light
-        self._mqtt_client.publish("greenpi/light", light_str)
+        self._mqtt_client.publish("greenpi/light", light)
 
 
 class _SoilWateringPollWorker(_SensorPollWorkerBase):
@@ -280,7 +276,9 @@ class _SoilWateringPollWorker(_SensorPollWorkerBase):
         time.sleep(SOIL_WATERING_POLL_DELAY)   # Apply poll delay
         soil_moisture = self._sensor.soil_moisture()
         water_present = self._drain_sensor.water_present()
-        self._record_queue.put(db_store.SoilMoistureRecord(self._scheduler.last_poll_time(), soil_moisture, water_present))        
+        self._record_queue.put(db_store.SoilMoistureRecord(self._scheduler.last_poll_time(), soil_moisture, water_present))
+        self._mqtt_client.publish("greenpi/soil_moisture", soil_moisture)
+        self._mqtt_client.publish("greenpi/water_present", water_present)
         ml_pumped = self._pump_manager.pump_if_needed(soil_moisture, self._drain_sensor)
         if ml_pumped > 0:
             self._record_queue.put(db_store.WateringEventRecord(self._scheduler.last_poll_time(), ml_pumped))
