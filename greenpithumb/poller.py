@@ -294,7 +294,7 @@ class _CameraPollWorker(_SensorPollWorkerBase):
         if self._sensor.sufficient_light():
             self._sensor.save_photo_full_res()
             self._sensor.save_photo_reduced_res()
-            self._sensor.create_timelapse()
+            #self._sensor.create_timelapse()
             self._mqtt_client.publish("greenpi/image_taken", "TRIGGER")
 
     def stop(self):
