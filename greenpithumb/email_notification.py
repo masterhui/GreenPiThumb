@@ -27,14 +27,26 @@ class EmailNotification(object):
     def send(self):
         """Sends an email via yagmail."""
         # Read credentials
-        f = open(AUTH_PATH, 'r')
-        user = f.readline().replace('\n', '')
-        pw = f.readline().replace('\n', '')
-        #print 'user=%s pw=%s' %(user, pw)
+        try:
+            f = open(AUTH_PATH, 'r')
+            user = f.readline().replace('\n', '')
+            pw = f.readline().replace('\n', '')
+            #print 'user=%s pw=%s' %(user, pw)
+        except:
+            print 'ERROR: Cannot open credentials file'
+            return
 
         # Register connection
-        yag = yagmail.SMTP(user, pw)
+        try:
+            yag = yagmail.SMTP(user, pw)
+        except:
+            print 'ERROR: Wrong username or password'
+            return
         
         # Send the email
-        yag.send(subject = self._subject, contents = self._body)
-        logger.info('Notifcation email sent to %s' % user)
+        try:
+            yag.send(subject = self._subject, contents = self._body)
+            logger.info('Notifcation email sent to %s' % user)
+        except:
+            print 'ERROR: Cannot send email using yagmail'
+            return
